@@ -1,0 +1,18 @@
+.card {
+  &-footer {
+    background-color: $white;
+    border-radius: 0 0 10px 10px;
+  }
+  .loader {
+    position: absolute;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(238, 242, 246, .6);
+    .spinner-loader {
+      margin: auto;
+    }
+  }
+}

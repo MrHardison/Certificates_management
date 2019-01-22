@@ -1,0 +1,64 @@
+tr {
+  &:nth-child(2n) {
+    background-color: $table_even !important;
+  }
+  &:hover {
+    background-color: $table_even !important;
+    box-shadow: 1px 1px 10px rgba(0, 0, 0, .1);
+  }
+  td {
+    font-size: .9rem;
+    padding: .5rem;
+    &.actions {
+      .icon {
+        cursor: pointer;
+        path {
+          fill: $main_blue;
+        }
+      }
+      .items {
+        cursor: pointer;
+        position: absolute;
+        background: $secondary;
+        padding: 1rem;
+        border-radius: .3rem;
+        width: 10rem;
+        left: .8%;
+        margin: 10px 0 0 0;
+        z-index: 2;
+
+        &:before {
+          content: ' ';
+          display: block;
+          width: 10px;
+          height: 5px;
+          position: absolute;
+          top: -10px;
+          left: 7px;
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+          border-bottom: 10px solid $secondary;
+        }
+        &.open {
+          display: block;
+        }
+        .item {
+          position: relative;
+          &:hover {
+            &:after{
+              width: 50%;
+            }
+          }
+          &:after {
+            background: $gray;
+            content: '';
+            display: block;
+            height: 1px;
+            transition: width .2s linear;
+            width: 20%;
+          }
+        }
+      }
+    }
+  }
+}

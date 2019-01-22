@@ -1,0 +1,49 @@
+.card {
+  border-radius: 10px !important;
+  background: $white;
+  &-header{
+    border-radius: 10px 10px 0 0 !important;
+    background: $white;
+  }
+  &-block {
+    padding: 1.25rem;
+    label {
+      color: $gray;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 26px;
+    }
+    .pull {
+      &-right {
+        float: right;
+      }
+      &-left {
+        float: left;
+      }
+    }
+  }
+  &-footer {
+    background: $white;
+    border-radius: 0 0 10px 10px !important;
+  }
+}
+@include mq($max-width: 767px) {
+  .card {
+    &-header {
+      .row {
+        justify-content: center;
+        .col {
+          justify-content: center;
+          &.header {
+            margin-bottom: 25px;
+            text-align: center;
+          }
+          &.entries {
+            margin-bottom: 25px;
+            text-align: left;
+          }
+        }
+      }
+    }
+  }
+}

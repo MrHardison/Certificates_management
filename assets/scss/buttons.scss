@@ -1,0 +1,91 @@
+.btn {
+  cursor: pointer;
+  border: 0;
+  box-shadow: none;
+  background: $light_gray;
+  position: relative;
+  transition: box-shadow .2s;
+  padding: 0 !important;
+  .content {
+    max-height: 45px;
+    display: flex;
+    align-items: center;
+    padding: 13px 33px;
+    background: rgba(0, 0, 0, 0);
+    transition: background .2s;
+  }
+  &:hover {
+    .content {
+      background: rgba(0, 0, 0, .1);
+    }
+  }
+  &:active {
+    .content {
+      background: rgba(0, 0, 0, .2);
+    }
+    box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.37);
+  }
+  .ml {
+    margin-left: 50px;
+  }
+  &.small {
+    .content {
+      padding: 8px 20px;
+    }
+  }
+  &.medium {
+    .content {
+      padding: 10.5px 27px;
+    }
+  }
+  &.btn-green {
+    color: $white;
+    background: linear-gradient(to right, $green 0%, $green_light 100%);
+  }
+  &.btn-smoke {
+    color: $gray;
+    background: linear-gradient(to right, $light_gray 0%, $secondary 100%);
+  }
+  &.btn-white {
+    border: 1px solid $secondary;
+    color: $main-blue;
+    background: $white;
+    &.active {
+      color: $white;
+      background: linear-gradient(to right, $main_blue 0%, $secondary_blue 100%);
+    }
+  }
+  &.rounded {
+    border-radius: 40px !important;
+    .content {
+      border-radius: 40px
+    }
+  }
+  &.bold {
+    font-family: Montserrat;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 24px;
+    text-transform: uppercase;
+    .fa, .fal, .far, .fab, .fas {
+      font-weight: 600;
+    }
+  }
+  &.floated-icon {
+    width: 154px;
+    text-align: left;
+    .content {
+      justify-content: space-between;
+      .fa, .fal, .far, .fab, .fas {
+        margin: 0;
+        display: inline-block;
+        line-height: 24px;
+      }
+    }
+  }
+  @include mq($max-width: 425px) {
+    .ml {
+      margin-left: 25px;
+    }
+  }
+}

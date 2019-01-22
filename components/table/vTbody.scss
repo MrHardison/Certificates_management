@@ -1,0 +1,40 @@
+.card-body {
+  padding: 0;
+  table {
+    margin-bottom: 0;
+    thead {
+      background: $light_gray;
+      tr {
+        th {
+          cursor: pointer;
+          font-size: 1rem;
+          font-weight: 500;
+          padding: 0.6rem;
+          border-bottom: none;
+          vertical-align: middle;
+          &:not(:first-child) {
+            border-left: 1px solid $gray;
+          }
+          .sortable-icon {
+            opacity: .5;
+            float: right;
+          }
+        }
+      }
+    }
+    tbody {
+      tr {
+        td {
+          vertical-align: middle;
+        }
+      }
+    }
+  }
+}
+@include mq($max-width: 767px) {
+  .card-body {
+    .table {
+      width: 767px;
+    }
+  }
+}

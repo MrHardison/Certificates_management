@@ -1,0 +1,41 @@
+$main_bg: #eef2f6;
+$white: #ffffff;
+$secondary: #d4d9e1;
+$gray: #818e9e;
+$light_gray: #c3cad4;
+$dark_gray: #2a313a;
+$blue: #0092bf;
+$main_blue: #007fb2;
+$secondary_blue: #1aa8e1;
+$main_dark: #0b203b;
+$breez: #68bcdb;
+$green: #90ca2a;
+$green_light: #a8ec2f;
+$error: #ca865f;
+$vdpColor: #cc99cd;
+
+$table_even: #f7f9fa;
+
+$input_error: #cc7070;
+$input_warning_message: #C39F1A;
+$input_warning: #C39F1A;
+
+
+
+.notifications {
+  z-index: 9998;
+  margin: 1.5rem 1.5rem 0 0;
+
+  .vue-notification {
+    margin: 0 0 10px 0;
+  }
+}
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.form-check {
+  padding: 0 !important;
+}

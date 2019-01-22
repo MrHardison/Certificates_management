@@ -1,0 +1,68 @@
+.form-group {
+  &.error {
+    label {
+      color: $error;
+    }
+    .control-body {
+      .form-control {
+        border-color: $error !important;
+      }
+    }
+  }
+  label {
+    color: #2a313a;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 26px;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .control-body {
+    position: relative;
+    .form-control {
+      border: none !important;
+      border-bottom: 1px solid #d4d9e1 !important;
+      border-radius: 0;
+      color: $gray;
+      height: 25px;
+      padding: 0;
+      text-transform: lowercase;
+      font-size: 18px;
+      &::placeholder {
+        color: #636C82 !important;
+      }
+      &.is-error {
+        border-color: $input_error;
+      }
+      &.is-warning {
+        border-color: $input_warning;
+      }
+    }
+    .message-warning,
+    .message-error {
+      position: absolute;
+      bottom: -18px;
+      right: 4px;
+      font-size: 0.75rem;
+    }
+    .message-error {
+      color: $input_error;
+    }
+    .message-warning {
+      color: $input_warning_message;
+    }
+    .limits {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: auto;
+      display: block;
+      text-align: right;
+      cursor: default;
+      color: $secondary;
+      background: $white;
+      font-size: 13px;
+      padding-left: .3rem;
+    }
+  }
+}

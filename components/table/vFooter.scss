@@ -1,0 +1,13 @@
+.card-footer {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  padding: 45px 22px 61px 22px;
+}
+
+@include mq($max-width: 980px) {
+  .card-footer {
+    flex-wrap: wrap;
+    padding: 20px 0;
+  }
+}

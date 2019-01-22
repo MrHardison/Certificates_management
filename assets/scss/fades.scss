@@ -1,0 +1,22 @@
+.table-fade-leave-active,
+.table-fade-enter-active {
+  transition: opacity .5s ease-out;
+}
+
+.table-fade-leave-to,
+.table-fade-enter {
+  opacity: 0;
+}
+
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+
+.fade-leave-active {
+  transition: opacity .2s;
+}

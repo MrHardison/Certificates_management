@@ -1,0 +1,83 @@
+.dropdown {
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 36px;
+  padding: 0;
+  height: 38px;
+  position: relative;
+  width: 100%;
+
+  .header {
+    border-radius: 3px;
+    border: 2px solid $secondary;
+    cursor: pointer;
+    height: 100%;
+    padding-right: 25px;
+
+    .title {
+      margin: 0 0 0 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &::after {
+      background-image: url("/down-arrow.png");
+      content: " ";
+      display: block;
+      width: 12px;
+      height: 7px;
+      position: absolute;
+      top: calc(50% - 3px);
+      right: 7px;
+      transition: all .3s;
+    }
+  }
+
+  .content {
+    display: none;
+    padding: 0;
+    background: #fff;
+    z-index: 1;
+    position: absolute;
+    width: 100%;
+    top: 32px;
+    border-top: 1px solid $secondary;
+    border-bottom: 2px solid $secondary;
+    border-left: 2px solid $secondary;
+    border-right: 2px solid $secondary;
+    border-radius: 0 0 3px 3px;
+
+    .options {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      max-height: 200px;
+      overflow: auto;
+
+      .option {
+        padding: 0 11px;
+        cursor: pointer;
+
+        &:hover {
+          background: $secondary;
+        }
+        
+        &.active {
+          background: $secondary;
+        }
+      }
+    }
+  }
+
+  &.open {
+    .header {
+      &::after {
+        transform: rotate(180deg);
+      }
+    }
+    .content {
+      display: block;
+    }
+  }
+}

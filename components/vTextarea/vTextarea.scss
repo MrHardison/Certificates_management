@@ -1,0 +1,61 @@
+.form-group {
+  &.error {
+    label {
+      color: $error;
+    }
+    .control-body {
+      .form-control {
+        border-color: $error !important;
+      }
+    }
+  }
+  label {
+    color: $gray;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 26px;
+  }
+  .control-body {
+    position: relative;
+    .form-control {
+      border: 2px solid $secondary;
+      border-radius: 0.25rem;
+      color: $dark_gray;
+      &::placeholder {
+        color: $secondary !important;
+      }
+      &.is-error {
+        border-color: $input_error;
+      }
+      &.is-warning {
+        border-color: $input_warning;
+      }
+    }
+    .message-warning,
+    .message-error {
+      position: absolute;
+      bottom: -18px;
+      right: 4px;
+      font-size: 0.75rem;
+    }
+    .message-error {
+      color: $input_error;
+    }
+    .message-warning {
+      color: $input_warning_message;
+    }
+    .limits {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: auto;
+      display: block;
+      text-align: right;
+      cursor: default;
+      color: $secondary;
+      background: $white;
+      font-size: 13px;
+      padding-left: .3rem;
+    }
+  }
+}
