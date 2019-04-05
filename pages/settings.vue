@@ -1,6 +1,6 @@
 <template>
   <div class="container-fluid">
-    <v-tabs v-if="Object.keys(sections).length && user && company">
+    <v-tabs v-if="sectionsParams">
       <template v-for="(section, key) in sections">
         <v-tab
           :key="key"
@@ -56,9 +56,21 @@
                               @update="setByHolder(element.holder, element.field_name, $event)" />
                           </div>
                         </template>
+                        <template v-if="false">
+                          <div
+                            :key="index"
+                            class="col-md-12 my-3">
+                            <label
+                              :for="element.field_name"
+                              class="control-label">{{ element.element_label }}</label>
+                            <timezone
+                              :options="$order(element.options)"
+                              :default-value="(getByHolder(element.holder))[element.field_name]"
+                              @update="setByHolder(element.holder, element.field_name, $event)"/>
+                          </div>
+                        </template>
                       </template>
                     </div>
-
                     <div class="row">
                       <div class="col save">
                         <button-rounded
@@ -89,6 +101,7 @@ import inputStandard from '~/components/inputStandard'
 import canvasSignature from '~/components/canvasSignature'
 import imageLoader from '~/components/imageLoader'
 import buttonRounded from '~/components/buttonRounded'
+import timezone from '~/components/timezone'
 
 export default {
   components: {
@@ -97,7 +110,8 @@ export default {
     vTabs,
     canvasSignature,
     imageLoader,
-    buttonRounded
+    buttonRounded,
+    timezone
   },
   middleware: 'pages',
   data() {
@@ -112,11 +126,14 @@ export default {
     }),
     sections() {
       const settings = this.getMenuPage(this.$route.name)
-      if (settings) {
+      if (settings && settings.properties.sections) {
         return settings.properties.sections
       } else {
         return {}
       }
+    },
+    sectionsParams() {
+      return Object.keys(this.sections).length && this.user && this.company
     }
   },
   mounted() {
@@ -125,23 +142,17 @@ export default {
   },
   methods: {
     async getUser() {
-      const requestParams = {
-        ui_id: 5
-      }
-      this.user = await this.$api().user.get(requestParams)
+      this.user = await this.$api().user.get()
     },
     async getCompany() {
-      const requestParams = {
-        ui_id: 5
-      }
-      this.company = await this.$api().company.get(requestParams)
+      this.company = await this.$api().company.get()
     },
     getByHolder(holder) {
       switch (holder) {
         case 'user':
-          return this.user
+          return this.user.properties
         case 'company':
-          return this.company
+          return this.company.properties
         default:
           return false
       }
@@ -153,8 +164,13 @@ export default {
       return true
     },
     updateSettings() {
-      this.$api().user.update(this.user)
-      this.$api().company.update(this.company)
+      Promise.all([
+        this.$api().user.update(this.user),
+        this.$api().company.update(this.company)
+      ]).then(res => {
+        this.getUser()
+        this.getCompany()
+      })
     }
   }
 }

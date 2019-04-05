@@ -33,7 +33,6 @@
             :label="'Password'"
             :type="'password'"
             @update="password = $event"/>
-         
           <div class="form-group">
             <nuxt-link
               :to="'/auth/forgot'"
@@ -54,7 +53,7 @@
           </div>
           <div class="agreement">
             By using this Service you agree to our
-            <a 
+            <a
               href="https://softwareworksforyou.co.uk/terms-of-use/"
               target="_blank"
               class="blue">Terms of Use</a>
@@ -68,7 +67,7 @@
             <nuxt-link
               :to="'/auth/register'"
               class="vl">
-              SignUp
+              Signup for Free
             </nuxt-link>
             <a
               target="_blank"
@@ -112,7 +111,7 @@ export default {
   },
 
   methods: {
-    ...mapMutations({ setToken: 'token/set' }),
+    ...mapMutations({ setToken: 'token/setToken' }),
     login() {
       this.$api()
         .auth.login({ email: this.email, password: this.password })

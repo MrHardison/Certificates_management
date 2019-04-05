@@ -16,7 +16,7 @@
               <div class="hamburger-inner"/>
             </div>
           </div>
-          <breadcrumb class="d-none d-sm-inline-block"/>
+          <slot/>
         </div>
         <div class="buttons">
           <button
@@ -104,16 +104,17 @@
 
 <script>
 import { mapGetters, mapMutations } from 'vuex'
-import Breadcrumb from '~/components/breadcrumbs'
 
 export default {
   name: 'NavBar',
-  components: { Breadcrumb },
   computed: {
     ...mapGetters({ isClosed: 'menu/isClosed', ui: 'menu/getMenuPages' })
   },
   methods: {
-    ...mapMutations({ toggleMenu: 'menu/toggleMenu', setToken: 'token/set' }),
+    ...mapMutations({
+      toggleMenu: 'menu/toggleMenu',
+      setToken: 'token/setToken'
+    }),
 
     logout() {
       this.setToken(false)
@@ -124,8 +125,7 @@ export default {
         })
         .catch(err => {})
     },
-    sidebarItem(e) {
-      // $emit('breadcrumps', e)
+    sidebarItem() {
       if (window.innerWidth <= 768) {
         this.toggleMenu()
       }

@@ -37,6 +37,12 @@ export default {
       handler(data) {
         this.$emit('change', data)
       }
+    },
+    defaultChecked: {
+      deep: true,
+      handler(data) {
+        this.model = data
+      }
     }
   },
   created() {

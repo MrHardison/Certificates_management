@@ -7,10 +7,10 @@
         :tbody="tBody"
         :tfooter="tFooter"
         :is-loading="isLoading"
-        @set_page="page = $event"
-        @search_text="search_text = $event"
-        @order_by="orderBy = $event"
-        @interval="interval = $event">
+        @set_page="params.page = $event"
+        @search_text="debounceSearch($event)"
+        @order_by="setOrderBy($event)"
+        @interval="params.interval = $event">
         <template slot="header">
           <button-rounded
             class="btn-green rounded"
@@ -48,7 +48,8 @@
         :key="$route.params.id"
         :data-list-group-id="dataGroup.data_list_group_id"
         :child-tabs="dataGroup.tabs"
-        :is-loading="isLoading"/>
+        :is-loading="isLoading"
+        :record-groups="recordGroups"/>
     </template>
   </div>
 </template>
@@ -57,6 +58,7 @@
 import VTable from '~/components/table/vTable'
 import ButtonRounded from '~/components/buttonRounded/buttonRounded'
 import VModal from '~/components/vModal/vModal'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'Name',
@@ -71,11 +73,19 @@ export default {
   },
   data() {
     return {
-      search_text: '',
-      orderBy: {},
-      page: 1,
+      recordGroups: null,
       isLoading: true,
-      interval: 10,
+      debounceSearch: _.debounce(text => {
+        this.params.search_text = text
+      }, 500),
+      params: {
+        data_list_group_id: this.dataGroup.data_list_group_id,
+        page: 1,
+        search_text: '',
+        order_by_column: null,
+        order_by_direction: null,
+        interval: 10
+      },
       deleteModal: {
         show: false,
         id: null
@@ -83,6 +93,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({ getToken: 'token/getApiToken' }),
     tBodyRules() {
       if (!this.dataGroup && this.dataGroup.hasOwnProperty('body_rules')) {
         return []
@@ -123,8 +134,24 @@ export default {
       }
     }
   },
-  asyncComputed: {
-    async recordGroups() {
+  watch: {
+    params: {
+      deep: true,
+      handler(data) {
+        this.getRecordGroups()
+      }
+    },
+    '$route.name': {
+      handler() {
+        this.getRecordGroups()
+      }
+    }
+  },
+  mounted() {
+    this.getRecordGroups()
+  },
+  methods: {
+    getRecordGroups() {
       if (this.$route.params.hasOwnProperty('id')) {
         return null
       }
@@ -132,24 +159,17 @@ export default {
         return null
       }
       this.isLoading = true
-      return await this.$api()
-        .recordGroups.get({
-          data_list_group_id: this.dataGroup.data_list_group_id,
-          page: this.page,
-          search_text: this.search_text,
-          order_by_column: this.orderBy.orderBy,
-          order_by_direction: this.orderBy.sortingDirection,
-          interval: this.interval
-        })
-        .finally(() => {
-          this.isLoading = false
-        })
-    }
-  },
-  updated() {
-    this.recordGroups
-  },
-  methods: {
+      if (this.getToken) {
+        this.$api()
+          .recordGroups.get(this.params)
+          .then(res => {
+            this.recordGroups = this.$timezone(res)
+          })
+          .finally(() => {
+            this.isLoading = false
+          })
+      }
+    },
     generateActions(row) {
       let actions = []
       this.$order(this.tBodyRules.actions).forEach(item => {
@@ -193,11 +213,15 @@ export default {
         await this.$api()
           .recordGroups.deleteById(id)
           .then(res => {
-            document.location.reload(true)
+            this.getRecordGroups()
           })
       }
       this.deleteModal.show = false
       this.deleteModal.id = null
+    },
+    setOrderBy(orderBy) {
+      this.params.order_by_column = orderBy.orderBy
+      this.params.order_by_direction = orderBy.sortingDirection
     }
   }
 }

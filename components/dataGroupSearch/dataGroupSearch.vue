@@ -8,24 +8,28 @@
         class="mr-2" />
       {{ name }}
     </button-rounded>
-
-    <!-- Modal for setup record group to certificate -->
     <v-modal
       v-if="searchRecordGroupsModal"
-      class="findCustomerModal"
-      header="Find"
+      class="find-customer-modal"
+      header="Select data group"
       @close="searchRecordGroupsModal = false">
       <template slot="body">
         <input-standard
-          :computed_value="searchText"
+          :computed_value="params.search_text"
+          :search_icon="true"
           label="Search in data groups"
           placeholder="Type the text"
           class="search-input"
-          @update="searchText = $event"/>
+          @update="params.search_text = $event"/>
         <div class="modal-list">
+          <div
+            v-if="isLoading"
+            class="content-loading">
+            <spinner-loader />
+          </div>
           <template v-if="recordGroups">
-            <template v-if="recordGroups.data.length">
-              <template v-for="(item, index) in recordGroups.data">
+            <template v-if="recordGroupOptions">
+              <template v-for="(item, index) in recordGroupOptions">
                 <div
                   :key="index"
                   class="modal-list-customer"
@@ -42,10 +46,6 @@
             Please wait
           </template>
         </div>
-        <v-paginator
-          :paginator="pagination"
-          class="inmodal-paginator"
-          @changePage="page = $event"/>
       </template>
       <div slot="footer">
         <button-rounded
@@ -60,36 +60,9 @@
         </button-rounded>
       </div>
     </v-modal>
-    <!-- End modal for setup record group to certificate -->
-
-    <!-- Modal for accept changing record group -->
-    <v-modal
-      v-if="acceptModal"
-      header="warning"
-      @close="''">
-      <template slot="body">
-        {{ message }}
-      </template>
-      <div slot="footer">
-        <button-rounded
-          class="btn-smoke rounded small mr-2"
-          @click.native="''">
-          Close
-        </button-rounded>
-        <button-rounded
-          class="btn-green rounded small mr-2"
-          @click.native="''">
-          Accept
-        </button-rounded>
-      </div>
-    </v-modal>
-    <!-- End modal for accept changing record group -->
-
-    <!-- Modal for parent choosing -->
     <v-modal
       v-if="needToSelectParentModal"
-      header="Warning"
-      @close="''">
+      header="Warning">
       <template slot="body">
         Need to chose parent data group
       </template>
@@ -103,17 +76,13 @@
         </button-rounded>
       </div>
     </v-modal>
-    <!-- End modal for parent choosing -->
-
-    <!-- Modal for create record group -->
     <data-group-create
       v-if="createRecordGroupModal"
-      :key="data_list_group_id"
-      :data-group-id="data_list_group_id"
-      :parent-record-group-id="parent_record_group_id"
+      :key="dataListGroupId"
+      :data-group-id="dataListGroupId"
+      :parent-record-group-id="parentRecordGroupId"
       @close="createRecordGroupModal = false"
       @setCustomerData="setData($event)"/>
-      <!-- End modal for create record group -->
   </div>
 </template>
 
@@ -122,25 +91,26 @@ import VModal from '~/components/vModal/vModal'
 import ButtonRounded from '~/components/buttonRounded/buttonRounded'
 import VFooter from '~/components/table/vFooter'
 import InputStandard from '~/components/inputStandard/inputStandard'
-import VPaginator from '~/components/vPaginator'
-import DataGroupCreate from './dataGroupCreate'
+import DataGroupCreate from '~/components/dataGroupSearch/dataGroupCreate'
+import { mapGetters } from 'vuex'
+import SpinnerLoader from '~/components/spinerLoader'
 
 export default {
   name: 'DataGroupSearch',
   components: {
     DataGroupCreate,
-    VPaginator,
     VModal,
     ButtonRounded,
     VFooter,
-    InputStandard
+    InputStandard,
+    SpinnerLoader
   },
   props: {
     name: {
       type: String,
       default: ''
     },
-    data_list_group_id: {
+    dataListGroupId: {
       type: Number,
       default: null
     },
@@ -161,72 +131,102 @@ export default {
   },
   data() {
     return {
-      searchText: '',
+      dataGroup: {},
+      recordGroups: [],
       searchRecordGroupsModal: false,
       createRecordGroupModal: false,
-      page: 1,
-      acceptModal: false,
       needToSelectParentModal: false,
-      parent_record_group_id: null
+      parentRecordGroupId: null,
+      isLoading: false,
+      params: {
+        data_list_group_id: this.dataListGroupId,
+        page: 1,
+        search_text: '',
+        interval: 500
+      }
     }
   },
   computed: {
-    pagination() {
-      if (!this.recordGroups) {
-        return {}
-      }
-      return {
-        current_page: this.recordGroups.current_page,
-        from: this.recordGroups.from,
-        to: this.recordGroups.to,
-        per_page: this.recordGroups.per_page,
-        total: this.recordGroups.total,
-        last: this.recordGroups.last_page
-      }
+    ...mapGetters({ getToken: 'token/getApiToken' }),
+    recordGroupOptions() {
+      const filteredRecordGroup = []
+      _.filter(this.recordGroups, item => {
+        const recordString = this.renderData(item).toLowerCase()
+        recordString.indexOf(this.params.search_text.toLowerCase()) > -1 &&
+          filteredRecordGroup.push(item)
+      })
+      return filteredRecordGroup
     }
   },
-  asyncComputed: {
-    recordGroups() {
-      if (!this.data_list_group_id || !this.dataGroup) {
-        return false
-      }
-      const params = {
-        data_list_group_id: this.data_list_group_id,
-        page: this.page,
-        search_text: this.searchText,
-        interval: 10
-      }
-      if (this.dataGroup.data_list_group_id) {
-        const parent = _.find(this.selectedRecordGroups, {
-          data_list_group_id: this.dataGroup.data_list_group_id
-        })
-        if (!parent) {
-          this.needToSelectParentModal = true
-          return
-        } else {
-          this.parent_record_group_id = parent.record_group_id
-          params.record_group_id = parent.record_group_id
+  watch: {
+    searchRecordGroupsModal: {
+      deep: true,
+      handler(data) {
+        if (data) {
+          this.recordGroups = []
+          this.getRecordGroups()
         }
       }
-      return this.$api()
-        .recordGroups.get(params)
-        .then(res => {
-          return res
-        })
-    },
-    dataGroup() {
-      return this.$api().dataGroups.getById(this.data_list_group_id)
     }
   },
+  mounted() {
+    this.getDataGroup()
+  },
   methods: {
+    getDataGroup() {
+      this.$api()
+        .dataGroups.getById(this.dataListGroupId)
+        .then(res => {
+          this.dataGroup = res
+        })
+    },
+    getRecordGroups() {
+      if (this.dataListGroupId || this.dataGroup) {
+        if (this.dataGroup.data_list_group_id) {
+          const parent = _.find(this.selectedRecordGroups, {
+            data_list_group_id: this.dataGroup.data_list_group_id
+          })
+          if (!parent) {
+            this.searchRecordGroupsModal = false
+            this.needToSelectParentModal = true
+          } else {
+            this.needToSelectParentModal = false
+            this.parentRecordGroupId = parent.record_group_id
+            this.params.record_group_id = parent.record_group_id
+          }
+        }
+        if (this.getToken) {
+          this.isLoading = true
+          this.$api()
+            .recordGroups.get(this.params)
+            .then(res => {
+              res.data.forEach(item => {
+                this.recordGroups.push(item)
+              })
+              if (res.next_page_url !== null) {
+                ++this.params.page
+                this.getRecordGroups()
+              } else {
+                this.params.page = 1
+              }
+            })
+            .finally(() => {
+              this.isLoading = false
+            })
+        }
+      }
+    },
     setData(data) {
       this.searchRecordGroupsModal = false
       this.$emit('setCustomerData', data)
     },
     renderData(recordGroup) {
       const res = []
-      Object.keys(this.$orderObject(this.dataGroup.schema)).forEach(key => {
-        if (recordGroup['child.data'].hasOwnProperty(key)) {
+      _.forEach(Object.keys(this.$orderObject(this.dataGroup.schema)), key => {
+        if (
+          recordGroup['child.data'].hasOwnProperty(key) &&
+          recordGroup['child.data'][key]
+        ) {
           res.push(recordGroup['child.data'][key])
         }
       })
@@ -240,11 +240,6 @@ export default {
 </script>
 
 <style lang="scss">
-.inmodal-paginator {
-  display: flex;
-  flex-direction: column;
-  padding: 20px 0;
-}
 .modal-list-customer {
   border-bottom: 1px solid rgba($gray, 0.3);
   cursor: pointer;
@@ -256,14 +251,33 @@ export default {
   }
 }
 
-.findCustomerModal {
+.find-customer-modal {
   .modal-wrapper {
     .modal-container {
       .modal-body {
         .modal-list {
+          height: 300px;
           overflow-y: auto !important;
           overflow-x: hidden;
-          max-height: 300px;
+          position: relative;
+        }
+        .content-loading {
+          background: #fff;
+          box-sizing: border-box;
+          height: 100%;
+          left: 50%;
+          position: absolute;
+          top: 0;
+          transform: translateX(-50%);
+          width: 100%;
+          z-index: 2;
+
+          .spinner-loader {
+            left: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+          }
         }
       }
     }

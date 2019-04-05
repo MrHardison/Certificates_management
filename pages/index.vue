@@ -8,11 +8,10 @@
           src="/error.png"
           class="img-fluid">
       </a>
-      <div class="dashboard__block__text">
-        <h2 class="text-center">Hi %username%!</h2>
+      <div class="dashboard__block__text text-center">
+        <h1>Welcome</h1>
         <p>
-          Now you don't have a widgets.<br>
-          If you have a questions please <a href="mailto:support@softwareworksforyou.co.uk">email</a> us. Thanks!
+          Please click on one of the menu items on the left to get started.
         </p>
       </div>
     </div>

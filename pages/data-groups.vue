@@ -43,7 +43,9 @@ export default {
     dataGroups() {
       const groups = this.getMenuPage('data-groups')
       if (groups && groups.properties.hasOwnProperty('sub_pages')) {
-        return groups.properties.sub_pages
+        return _.filter(groups.properties.sub_pages, tab => {
+          return tab.hasOwnProperty('visible') && tab.visible
+        })
       }
       return []
     },

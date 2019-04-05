@@ -1,0 +1,155 @@
+.item-selector {
+  font-size: 16px;
+  font-weight: 300;
+  padding: 0;
+  width: 100%;
+
+  .input {
+    cursor: pointer;
+    height: 38px;
+    position: relative;
+    line-height: 36px;
+
+    .input-icon {
+      color: $secondary;
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      width: 20px;
+      transform: translateY(-50%);
+    }
+
+    .form-control {
+      height: 100%;
+      border: 2px solid $secondary;
+      border-radius: 3px;
+      padding-left: 35px;
+
+      &:focus {
+        box-shadow: none;
+        border-radius: 3px 3px 0 0;
+      }
+    }
+  }
+  .parent {
+    &-wrapper {
+      height: 65px;
+      overflow-y: hidden;
+      overflow-x: auto;
+      width: 100%;
+    }
+    &-list {
+      align-items: center;
+      box-sizing: border-box;
+      display: flex;
+      height: 100%;
+      padding-bottom: 10px;
+      justify-content: flex-start;
+      white-space: nowrap;
+      width: auto;
+    }
+    &-item {
+      align-items: center;
+      border-radius: 40px;
+      border: 1px solid #d4d9e1;
+      box-sizing: border-box;
+      color: $main_blue;
+      cursor: pointer;
+      background: #fff;
+      display: inline-flex;
+      padding: 5px 10px;
+      justify-content: space-between;
+
+      &:hover {
+        background: linear-gradient(to right, #90ca2a 0%, #a8ec2f 100%);
+        color: #fff;
+      }
+
+      &.active {
+        background: linear-gradient(to right, #90ca2a 0%, #a8ec2f 100%);
+        cursor: default;
+        color: #fff;
+      }
+
+      & ~ .parent-item {
+        margin-left: 10px;
+      }
+    }
+  }
+  .content {
+    background: #fff;
+    border: 2px solid $secondary;
+    border-radius: 3px;
+    height: 200px;
+    margin-top: 1rem;
+    padding: 0;
+    position: relative;
+    width: 100%;
+    z-index: 1;
+
+    &-loading {
+      box-sizing: border-box;
+      background: #fff;
+      height: 100%;
+      left: 50%;
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      width: 100%;
+      z-index: 2;
+
+      .spinner-loader {
+        left: 50%;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+    }
+
+    .options {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      overflow: auto;
+
+      .option {
+        border-bottom: 1px solid $secondary;
+        cursor: pointer;
+        position: relative;
+        z-index: 1;
+
+        &-container {
+          display: flex;
+          padding: 5px 11px;
+          width: 100%;
+        }
+
+        .delete-lookup {
+          color: red;
+          font-size: 16px;
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 2;
+        }
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background: $secondary;
+        }
+
+        &.active {
+          background: $secondary;
+        }
+        &.empty {
+          cursor: default;
+        }
+      }
+    }
+  }
+}

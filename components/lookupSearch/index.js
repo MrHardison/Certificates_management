@@ -1,3 +1,3 @@
-import LookupSearch from './lookupSearch'
+import lookupSearch from './lookupSearch'
 
-export default LookupSearch
+export default lookupSearch

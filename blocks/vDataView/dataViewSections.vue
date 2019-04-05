@@ -2,25 +2,29 @@
   <div class="col-md-2">
     <nav class="sections-list">
       <ul>
-        <template v-for="(section, index) in sectionsToShow">
-          <li
+        <template v-for="(section, index) in transformToTree">
+          <data-view-sections-tree
+            v-if="!section.autoload && section.form_section_id === null"
             :key="index"
-            :class="{ active: section.id === activeSectionId}"
-            class="sections-item"
-            @click="openSection(section.id)">{{ section.name }}</li>
+            :item="section"
+            :active-section-id="activeSectionId"
+            :class="{active: section.id === activeSectionId, filled: checkSectionStatus(section) === 'filled'}"
+            @make-folder="makeFolder"
+            @openSection="openSection($event)"
+            @click.native="section.children.length === 0 && openSection(section.id)"/>
         </template>
-        <li
-          v-show="showReturnBtn"
-          class="sections-item"
-          @click="backSections">Return</li>
       </ul>
     </nav>
   </div>
 </template>
 
 <script>
+import dataViewSectionsTree from './dataViewSectionsTree'
+import { mapGetters } from 'vuex'
+
 export default {
   name: 'DataViewSections',
+  components: { dataViewSectionsTree },
   props: {
     sections: {
       type: Array,
@@ -40,23 +44,25 @@ export default {
     }
   },
   computed: {
-    sectionsToShow() {
-      return _.filter(this.sections, {
-        form_section_id: this.parentSectionId
+    ...mapGetters({ getSectionsStatus: 'dataView/getSectionsStatus' }),
+    transformToTree() {
+      const sections = []
+      _.forEach(this.sections, section => {
+        sections.push(_.assign({}, section))
       })
-    },
-    showReturnBtn() {
-      const current = _.find(this.sections, { id: this.activeSectionId })
-      if (!current) {
-        return false
-      }
-      if (current.form_section_id) {
-        return true
-      }
-      const possibleChild = _.filter(this.sections, {
-        form_section_id: current.id
+      let nodes = {}
+      return _.filter(sections, obj => {
+        let id = obj.id
+        let parentId = obj.form_section_id
+
+        nodes[id] = _.defaults(obj, nodes[id], { children: [] })
+        parentId &&
+          (nodes[parentId] = nodes[parentId] || { children: [] })[
+            'children'
+          ].push(obj)
+
+        return nodes
       })
-      return possibleChild.length
     }
   },
   watch: {
@@ -65,6 +71,25 @@ export default {
     }
   },
   methods: {
+    checkSectionStatus(section) {
+      const item = _.find(this.getSectionsStatus, {
+        form_section_id: section.id
+      })
+      return item && item.status
+    },
+    subSections(id) {
+      const sub = []
+      _.forEach(this.sections, section => {
+        if (section.form_section_id === id) {
+          sub.push(section)
+        }
+      })
+      return sub
+    },
+    makeFolder(item) {
+      Vue.set(item, 'children', [])
+      this.addItem(item)
+    },
     backSections() {
       const parent = _.find(this.sections, { id: this.parentSectionId })
       if (parent && parent.form_section_id) {
@@ -79,7 +104,7 @@ export default {
       const current = _.find(this.sections, { id })
       if (current) {
         const hasChild = _.filter(this.sections, { form_section_id: id })
-        if (hasChild.length) {
+        if (hasChild.length > 0) {
           this.parentSectionId = id
         }
       }
@@ -96,14 +121,17 @@ export default {
     box-sizing: border-box;
     box-shadow: 0 1px 6px -1px rgba(0, 0, 0, 0.2);
     cursor: pointer;
-    margin-bottom: 10px;
     overflow: hidden;
     position: relative;
     padding: 8px 20px;
 
+    & ~ .sections-item {
+      margin-top: 10px;
+    }
+
     &::before {
       content: '';
-      background: #f00f00;
+      background: $gray;
       height: 100%;
       left: 0;
       position: absolute;
@@ -113,24 +141,26 @@ export default {
 
     &.filled {
       &::before {
-        background: #00c200;
-      }
-    }
-
-    &.unfilled {
-      &::before {
-        background: #fcac01;
+        background: $green_light;
       }
     }
 
     &:hover,
     &.active {
       &::before {
-        background: #0092bf !important;
+        background: $blue !important;
       }
     }
     &.active {
       cursor: default;
+    }
+
+    &.open {
+      padding: 8px 10px;
+
+      &::before {
+        background: $blue !important;
+      }
     }
   }
 }

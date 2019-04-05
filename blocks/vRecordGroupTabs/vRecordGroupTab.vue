@@ -14,6 +14,7 @@
 
 <script>
 import VTable from '~/components/table'
+
 export default {
   name: 'VRecordGroupTab',
   components: { VTable },

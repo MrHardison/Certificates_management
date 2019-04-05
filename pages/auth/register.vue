@@ -113,7 +113,7 @@ export default {
   },
 
   methods: {
-    ...mapMutations({ setToken: 'token/set' }),
+    ...mapMutations({ setToken: 'token/setToken' }),
     register() {
       this.$api()
         .auth.register({

@@ -1,6 +1,8 @@
 export const state = () => ({
   certificate: {},
-  form: {}
+  form: {},
+  sectionsStatus: [],
+  oldLookupSelectedOptions: {}
 })
 
 export const mutations = {
@@ -9,14 +11,29 @@ export const mutations = {
   },
   setForm(state, data) {
     state.form = data
+  },
+  setSectionsStatus(state, data) {
+    state.sectionsStatus = data
+  },
+  setOldLookupSelectedOptions(state, data) {
+    _.assign(state.oldLookupSelectedOptions, data)
+  },
+  clearOldLookupSelectedOptions(state) {
+    state.oldLookupSelectedOptions = {}
   }
 }
 
 export const getters = {
-  certificate: ({ certificate }) => {
-    return certificate
+  certificate(state) {
+    return state.certificate
   },
-  form: ({ form }) => {
-    return form
+  form(state) {
+    return state.form
+  },
+  getSectionsStatus(state) {
+    return state.sectionsStatus
+  },
+  getOldLookupSelectedOptions(state) {
+    return state.oldLookupSelectedOptions
   }
 }

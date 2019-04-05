@@ -1,32 +1,27 @@
 <template>
   <div>
-    <h4>Access to roles and permissions tab:</h4>
-    <checkbox
-      :default-checked="access.read"
-      label="Read"
-      @change="access.read = $event"/>
-    <checkbox
-      :default-checked="access.update"
-      label="Update"
-      @change="access.update = $event"/>
-    <checkbox
-      :default-checked="access.create"
-      label="Create"
-      @change="access.create = $event"/>
-    <checkbox
-      :default-checked="access.delete"
-      label="Delete"
-      @change="access.delete = $event"/>
+    <tree-item
+      :title="'Access to roles and permissions tab:'"
+      :opened="true"
+      :default-checked="{
+        read: access.read,
+        update: access.update,
+        create: access.create,
+        delete: access.delete
+      }"
+      @updateItem="setItem($event)"/>
   </div>
 </template>
 
 <script>
 import Checkbox from '~/components/checkbox'
+import TreeItem from '~/blocks/vRole/treeItem'
 
 export default {
   name: 'RolesAndPermissions',
   components: {
-    Checkbox
+    Checkbox,
+    TreeItem
   },
   props: {
     access: {
@@ -41,12 +36,22 @@ export default {
       }
     }
   },
+  data() {
+    return {
+      newAccess: {}
+    }
+  },
   watch: {
-    access: {
+    newAccess: {
       deep: true,
       handler(data) {
-        this.$emit('udate', data)
+        this.$emit('update', data)
       }
+    }
+  },
+  methods: {
+    setItem(item) {
+      this.newAccess = item
     }
   }
 }

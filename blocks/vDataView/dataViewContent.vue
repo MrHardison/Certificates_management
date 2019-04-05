@@ -7,12 +7,16 @@
           :key="element.id"
           class="section">
           <template v-if="element.rules.field_type === 1">
+            <!-- :key="getCertificateElementData(element.id)" -->
             <input-standard
-              :key="getCertificateElementData(element.id)"
               :label="element.name"
+              :class="{default: element.data_list_group_id}"
               :disabled="element.data_list_group_id ? true : false"
               :computed_value="getCertificateElementData(element.id)"
               :limits="(element.hasOwnProperty('limits') && element.limits.hasOwnProperty('char')) ? element.limits.char : {}"
+              :validate="element.rules.validate"
+              :element-id="element.id"
+              @validationError="$emit('validationError', $event)"
               @update="getCertificateElement(element.id).data = $event"/>
           </template>
           <template v-else-if="element.rules.field_type === 2">
@@ -26,14 +30,17 @@
           <template v-else-if="element.rules.field_type === 4">
             <lookup-search
               :name="element.name"
+              :element-id="element.id"
+              :record-groups="recordGroups"
               :message="element.rules.message"
-              :data_list_default_id="element.data_list_default_id"
-              :data_list_group_id="element.data_list_group_id"
+              :el-data-list-default-id="element.data_list_default_id"
+              :el-data-list-group-id="element.data_list_group_id"
+              :form-section-id="element.form_section_id"
               :form-section-elements="formSection.elements"
               :certificate-elements="certificateSection.elements"
-              @setLookupData="setLookupData(getCertificateElement(element.id), $event)"
-              @chooseParent="''"/>
-          </template>  
+              @setLookupData="$emit('setLookupData', $event)"
+              @updateChildData="$emit('updateChildData', $event)"/>
+          </template>
           <template v-else-if="element.rules.field_type === 5">
             <div
               class="item">
@@ -42,7 +49,7 @@
                 class="control-label label">{{ element.name }}</label>
               <canvas-signature
                 :key="element.id"
-                :id="element.name.replace(/\W/g, '').toLowerCase()"
+                :id="getSignatureName(element.name)"
                 :signature="getCertificateElementData(element.id)"
                 :data="element"
                 @update="getCertificateElement(element.id).data = $event"/>
@@ -81,7 +88,7 @@
             <data-group-search
               :name="element.name"
               :message="element.rules.message"
-              :data_list_group_id="element.data_list_group_id"
+              :data-list-group-id="element.data_list_group_id"
               :record-groups="recordGroups"
               :selected-record-group-id="currentRecordGroupId"
               :selected-record-groups="recordGroups"
@@ -91,8 +98,23 @@
           <template v-if="element.rules.field_type === 15">
             <date-picker
               :name="element.name"
+              :format="element.rules.formats.browser"
               :new-date="getCertificateElementData(element.id)"
               @date="getCertificateElement(element.id).data = $event"/>
+          </template>
+          <template v-if="element.rules.field_type === 21">
+            <multi-lookup-search
+              :name="element.name"
+              :element-id="element.id"
+              :record-groups="recordGroups"
+              :message="element.rules.message"
+              :el-data-list-default-id="element.data_list_default_id"
+              :el-data-list-group-id="element.data_list_group_id"
+              :form-section-id="element.form_section_id"
+              :form-section-elements="formSection.elements"
+              :certificate-elements="certificateSection.elements"
+              @setLookupData="$emit('setLookupData', $event)"
+              @updateChildData="$emit('updateChildData', $event)"/>
           </template>
         </div>
       </template>
@@ -106,10 +128,11 @@ import vTextarea from '~/components/vTextarea/vTextarea'
 import vRadio from '~/components/vRadio/vRadio'
 import ButtonRounded from '~/components/buttonRounded/buttonRounded'
 import SpinerLoader from '~/components/spinerLoader'
-import DatePicker from '~/components/datePicker/datePicker'
+import DatePicker from '~/components/datePicker'
 import canvasSignature from '~/components/canvasSignature'
 import DataGroupSearch from '~/components/dataGroupSearch'
-import LookupSearch from '~/components/lookupSearch'
+import lookupSearch from '~/components/lookupSearch'
+import multiLookupSearch from '~/components/multiLookupSearch'
 import TickBox from '~/components/tickBox'
 
 export default {
@@ -117,7 +140,8 @@ export default {
   components: {
     TickBox,
     DataGroupSearch,
-    LookupSearch,
+    lookupSearch,
+    multiLookupSearch,
     Checkbox,
     ButtonRounded,
     InputStandard,
@@ -164,7 +188,9 @@ export default {
       })
     },
     getCertificateElementData(id) {
-      return this.getCertificateElement(id).data
+      if (this.getCertificateElement(id)) {
+        return this.getCertificateElement(id).data
+      }
     },
     setCustomerData(data) {
       this.certificateSection.elements = this.certificateSection.elements.map(
@@ -184,11 +210,10 @@ export default {
           cElement.record_group_id = data['child.id']
         }
       })
+      this.$emit('resetRecordGroup', data['child.data_list_group_id'])
     },
-    setLookupData(selectedElement, args) {
-      selectedElement.data = args.data
-      selectedElement.record_lookup_id = args.id
-      selectedElement.record_lookup_type = args.type
+    getSignatureName(name) {
+      return name.replace(/\W/g, '').toLowerCase()
     }
   }
 }

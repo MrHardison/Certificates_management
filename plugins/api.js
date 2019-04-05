@@ -5,29 +5,6 @@ const api = {
     Vue.mixin({
       methods: {
         $api() {
-          const alert = response => {
-            if (response) {
-              let alert = {
-                group: 'alerts',
-                type: 'success',
-                text: response.data.meta.message
-              }
-              switch (response.data.meta.code) {
-                case 1:
-                  alert.type = 'success'
-                  break
-                case 2:
-                  alert.type = 'warn'
-                  break
-                case 3:
-                  alert.type = 'error'
-                  break
-                default:
-                  return false
-              }
-              this.$notify(alert)
-            }
-          }
           const $axios = this.$store.$axios
           const $store = this.$store
 
@@ -35,19 +12,6 @@ const api = {
           if (token) {
             $axios.setToken(token, 'Bearer')
           }
-
-          $axios.onResponse(response => {
-            if (response.status === 204) {
-              return response
-            }
-            alert(response)
-            return response
-          })
-
-          $axios.onResponseError(error => {
-            alert(error.response)
-            return error
-          })
 
           const methods = {
             menu: {
@@ -102,6 +66,16 @@ const api = {
                   .catch(err => {
                     return err.response
                   })
+              },
+              async restore(params = {}) {
+                return await $axios
+                  .post('/auth/reset/token', params)
+                  .then(res => {
+                    return res.data.data
+                  })
+                  .catch(err => {
+                    return err.response
+                  })
               }
             },
             user: {
@@ -109,7 +83,7 @@ const api = {
                 return await $axios
                   .get('/user', params)
                   .then(res => {
-                    return res.data.data.properties
+                    return res.data.data
                   })
                   .then(err => {
                     return err
@@ -119,7 +93,7 @@ const api = {
                 return await $axios
                   .post('/user', params)
                   .then(res => {
-                    return res.data.data.properties
+                    return res.data.data
                   })
                   .then(err => {
                     return err
@@ -131,7 +105,7 @@ const api = {
                 return await $axios
                   .get('/company', params)
                   .then(res => {
-                    return res.data.data.properties
+                    return res.data.data
                   })
                   .then(err => {
                     return err
@@ -141,7 +115,7 @@ const api = {
                 return await $axios
                   .post('/company', params)
                   .then(res => {
-                    return res.data.data.properties
+                    return res.data.data
                   })
                   .then(err => {
                     return err
@@ -162,16 +136,6 @@ const api = {
               async create(params = {}) {
                 return await $axios
                   .get('/data-view/create', { params })
-                  .then(res => {
-                    return res.data.data
-                  })
-                  .catch(err => {
-                    return err
-                  })
-              },
-              async store(params = {}) {
-                return await $axios
-                  .put('/data-view', params)
                   .then(res => {
                     return res.data.data
                   })
@@ -202,6 +166,31 @@ const api = {
               async deleteById(id, params = {}) {
                 return await $axios
                   .delete(`/data-view/${id}`, params)
+                  .then(res => {
+                    return res.data.data
+                  })
+                  .catch(err => {
+                    return err
+                  })
+              },
+              async render(id) {
+                return await $axios
+                  .get(`/data-view/render/${id}`, {
+                    headers: {
+                      Accept: 'application/pdf'
+                    },
+                    responseType: 'arraybuffer'
+                  })
+                  .then(res => {
+                    return res
+                  })
+                  .catch(err => {
+                    return err
+                  })
+              },
+              async store(params = {}) {
+                return await $axios
+                  .put('/data-view', params)
                   .then(res => {
                     return res.data.data
                   })
@@ -295,7 +284,7 @@ const api = {
               },
               async createRecordLookups(params = {}) {
                 return await $axios
-                  .put(`/record-lookups`, params)
+                  .put(`/record-lookups/custom`, params)
                   .then(res => {
                     return res
                   })
@@ -305,7 +294,7 @@ const api = {
               },
               async deleteRecordLookups(id) {
                 return await $axios
-                  .delete(`/record-lookups/${id}`)
+                  .delete(`/record-lookups/custom/${id}`)
                   .then(res => {
                     return res
                   })
@@ -319,7 +308,7 @@ const api = {
                 return await $axios
                   .get(`/data-list-defaults`, params)
                   .then(res => {
-                    return res.data.data // ?
+                    return res.data.data
                   })
                   .catch(err => {
                     return err
@@ -327,6 +316,16 @@ const api = {
               }
             },
             dataGroups: {
+              async dataListGroups(params = {}) {
+                return await $axios
+                  .get(`/data-list-groups/`, { params })
+                  .then(res => {
+                    return res.data.data
+                  })
+                  .catch(err => {
+                    return err
+                  })
+              },
               async getById(id, params = {}) {
                 return await $axios
                   .get(`/data-list-groups/${id}`, { params })
@@ -443,6 +442,33 @@ const api = {
                   .put(`/users`, params)
                   .then(res => {
                     return res
+                  })
+                  .catch(err => {
+                    return err
+                  })
+              }
+            },
+            upload: {
+              async upload(params = {}) {
+                return await $axios
+                  .post(`/upload`, params)
+                  .then(res => {
+                    return res.data
+                  })
+                  .catch(err => {
+                    return err
+                  })
+              },
+              async getImageByUrl(url) {
+                return await $axios
+                  .get(url, {
+                    headers: {
+                      Accept: 'image/*'
+                    },
+                    responseType: 'blob'
+                  })
+                  .then(res => {
+                    return res.data
                   })
                   .catch(err => {
                     return err

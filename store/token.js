@@ -3,16 +3,16 @@ export const state = () => ({
 })
 
 export const mutations = {
-  set(state, data) {
+  setToken(state, data) {
     state.api = data
   },
-  unset(state) {
+  unsetToken(state) {
     state.items = false
   }
 }
 
 export const getters = {
-  getApiToken: ({ api }) => {
-    return api
+  getApiToken(state) {
+    return state.api
   }
 }

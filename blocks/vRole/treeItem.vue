@@ -2,16 +2,37 @@
   <div>
     <div class="item">
       <span
+        :class="{disabled: opened}"
         class="item-title"
         @click="toogleList">
         {{ title }}
         <fa
+          v-if="!opened"
           :icon="['fas', 'chevron-right']"
           :class="{open: isOpen}"
           class="item-icon"/>
       </span>
-      
-    </div>  
+      <ul
+        v-if="isOpen"
+        class="list-sriped mt-3">
+        <checkbox
+          :default-checked="manualChecked.read"
+          label="Read"
+          @change="changeValue('read', $event)"/>
+        <checkbox
+          :default-checked="manualChecked.update"
+          label="Update"
+          @change="changeValue('update', $event)"/>
+        <checkbox
+          :default-checked="manualChecked.create"
+          label="Create"
+          @change="changeValue('create', $event)"/>
+        <checkbox
+          :default-checked="manualChecked.delete"
+          label="Delete"
+          @change="changeValue('delete', $event)"/>
+      </ul>
+    </div>
     <div
       v-show="isOpen"
       class="item-block">
@@ -20,22 +41,92 @@
   </div>
 </template>
 <script>
+import Checkbox from '~/components/checkbox/checkbox'
 export default {
   name: 'TreeItem',
+  components: { Checkbox },
   props: {
     title: {
       type: String,
       default: 'no title'
+    },
+    defaultChecked: {
+      type: Object,
+      default() {
+        return {}
+      }
+    },
+    opened: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
-      isOpen: false
+      isOpen: false,
+      manualChecked: {
+        read: null,
+        update: null,
+        create: null,
+        delete: null
+      }
+    }
+  },
+  beforeMount() {
+    this.opened ? (this.isOpen = true) : false
+    this.manualChecked = {
+      read: this.defaultChecked.read,
+      update: this.defaultChecked.update,
+      create: this.defaultChecked.create,
+      delete: this.defaultChecked.delete
     }
   },
   methods: {
+    changeValue(item, value) {
+      if (item === 'delete' && value === true) {
+        this.manualChecked = {
+          read: true,
+          update: true,
+          create: true,
+          delete: true
+        }
+      } else if (item === 'delete' && value === false) {
+        this.manualChecked[item] = false
+      }
+      if (item === 'create' && value === true) {
+        this.manualChecked.create = true
+        this.manualChecked.update = true
+        this.manualChecked.read = true
+      } else if (item === 'create' && value === false) {
+        this.manualChecked.create = false
+        this.manualChecked.delete = false
+      }
+      if (item === 'update' && value === true) {
+        this.manualChecked.update = true
+        this.manualChecked.read = true
+      } else if (item === 'update' && value === false) {
+        this.manualChecked.delete = false
+        this.manualChecked.create = false
+        this.manualChecked.update = false
+      }
+      if (item === 'read' && value === true) {
+        this.manualChecked[item] = true
+      } else if (item === 'read' && value === false) {
+        this.manualChecked = {
+          read: false,
+          update: false,
+          create: false,
+          delete: false
+        }
+      }
+      this.$emit('updateItem', this.manualChecked)
+    },
     toogleList() {
-      this.isOpen = !this.isOpen
+      if (this.opened) {
+        this.isOpen = true
+      } else {
+        this.isOpen = !this.isOpen
+      }
     }
   }
 }
@@ -44,6 +135,10 @@ export default {
 .item {
   &-title {
     cursor: pointer;
+
+    &.disabled {
+      cursor: default;
+    }
   }
   &-icon {
     transition: transform 0.2s ease-out;
@@ -55,6 +150,11 @@ export default {
   }
   &-block {
     padding-top: 0.5rem;
+  }
+
+  .list-striped {
+    display: block;
+    margin-top: 10px;
   }
 }
 </style>

@@ -42,25 +42,16 @@
           <div
             :key="index"
             class="col-md-2">
-            <h4 class="label">
-              {{ group.name }}:
-            </h4>
-            <checkbox
-              :default-checked="checkedDataGroups[group.id].read"
-              label="Read"
-              @change="checkedDataGroups[group.id].read = $event"/>
-            <checkbox
-              :default-checked="checkedDataGroups[group.id].update"
-              label="Update"
-              @change="checkedDataGroups[group.id].update = $event"/>
-            <checkbox
-              :default-checked="checkedDataGroups[group.id].create"
-              label="Create"
-              @change="checkedDataGroups[group.id].create = $event"/>
-            <checkbox
-              :default-checked="checkedDataGroups[group.id].delete"
-              label="Delete"
-              @change="checkedDataGroups[group.id].delete = $event"/>
+            <tree-item
+              :opened="true"
+              :title="group.name"
+              :default-checked="{
+                read: checkedDataGroups[group.id].read,
+                update: checkedDataGroups[group.id].update,
+                create: checkedDataGroups[group.id].create,
+                delete: checkedDataGroups[group.id].delete
+              }"
+              @updateItem="setCheckboxValue(group.id, $event)"/>
           </div>
         </template>
       </div>
@@ -95,6 +86,7 @@
 import Checkbox from '~/components/checkbox'
 import InputStandard from '~/components/inputStandard'
 import FormTree from './formTree'
+import TreeItem from '~/blocks/vRole/treeItem'
 import RolesAndPermissions from './rolesAndPermissions'
 
 export default {
@@ -102,6 +94,7 @@ export default {
   components: {
     RolesAndPermissions,
     FormTree,
+    TreeItem,
     Checkbox,
     InputStandard
   },
@@ -193,6 +186,9 @@ export default {
         return response
       }
       return null
+    },
+    setCheckboxValue(id, item) {
+      this.checkedDataGroups[id] = item
     }
   }
 }

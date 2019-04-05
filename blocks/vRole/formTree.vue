@@ -4,31 +4,19 @@
       <template v-for="(category, index) in tree">
         <template v-if="category.forms.length">
           <div
-            :key="index" 
+            :key="index"
             class="list">
             <li
               class="list-striped--item outher">
               <tree-item
-                :title="category.name">
-                <ul
-                  class="list-sriped">
-                  <checkbox
-                    :default-checked="getFormCategoryChecks(category.id).read"
-                    label="Read"
-                    @change="setFormCategoryChecks(category.id, 'read', $event)"/>
-                  <checkbox
-                    :default-checked="getFormCategoryChecks(category.id).update"
-                    label="Update"
-                    @change="setFormCategoryChecks(category.id, 'update', $event)"/>
-                  <checkbox
-                    :default-checked="getFormCategoryChecks(category.id).create"
-                    label="Create"
-                    @change="setFormCategoryChecks(category.id, 'create', $event)"/>
-                  <checkbox
-                    :default-checked="getFormCategoryChecks(category.id).delete"
-                    label="Delete"
-                    @change="setFormCategoryChecks(category.id, 'delete', $event)"/>
-                </ul>
+                :title="category.name"
+                :default-checked="{
+                  read: getFormCategoryChecks(category.id).read,
+                  update: getFormCategoryChecks(category.id).update,
+                  create: getFormCategoryChecks(category.id).create,
+                  delete: getFormCategoryChecks(category.id).delete
+                }"
+                @updateItem="setFormCategoryChecks(category.id, $event)">
                 <ul
                   class="list-striped">
                   <template v-for="form in category.forms">
@@ -36,27 +24,14 @@
                       :key="form.id"
                       class="list-striped--item">
                       <tree-item
-                        :title="form.name">
-                        <div
-                          class="list-striped">
-                          <checkbox
-                            :default-checked="getFormChecks(form.id).read"
-                            label="Read"
-                            @change="setFormChecks(form.id, 'read', $event)"/>
-                          <checkbox
-                            :default-checked="getFormChecks(form.id).update"
-                            label="Update"
-                            @change="setFormChecks(form.id, 'update', $event)"/>
-                          <checkbox
-                            :default-checked="getFormChecks(form.id).create"
-                            label="Create"
-                            @change="setFormChecks(form.id, 'create', $event)"/>
-                          <checkbox
-                            :default-checked="getFormChecks(form.id).delete"
-                            label="Delete"
-                            @change="setFormChecks(form.id, 'delete', $event)"/>
-                        </div>
-                      </tree-item>
+                        :title="form.name"
+                        :default-checked="{
+                          read: getFormChecks(form.id).read,
+                          update: getFormChecks(form.id).update,
+                          create: getFormChecks(form.id).create,
+                          delete: getFormChecks(form.id).delete
+                        }"
+                        @updateItem="setFormChecks(form.id, $event)"/>
                     </li>
                   </template>
                 </ul>
@@ -142,22 +117,11 @@ export default {
       }
       return find
     },
-    setFormCategoryChecks(id, check, value) {
+    setFormCategoryChecks(id, item) {
       const find = this.checkedFormCategories[id]
       if (!find) {
-        const newCheck = {
-          create: false,
-          read: false,
-          update: false,
-          delete: false
-        }
-        this.checkedFormCategories[id] = newCheck
+        this.checkedFormCategories[id] = item
       }
-      Object.keys(this.checkedFormCategories).forEach(item => {
-        if (parseInt(item) === parseInt(id)) {
-          this.checkedFormCategories[id][check] = value
-        }
-      })
       this.$emit('updateFormCategories', this.checkedFormCategories)
     },
     getFormChecks(id) {
@@ -173,7 +137,6 @@ export default {
           delete: checked.pivot.delete
         }
       }
-
       if (!find) {
         return {
           create: false,
@@ -184,22 +147,11 @@ export default {
       }
       return find
     },
-    setFormChecks(id, check, value) {
+    setFormChecks(id, item) {
       const find = this.checkedForms[id]
       if (!find) {
-        const newCheck = {
-          create: false,
-          read: false,
-          update: false,
-          delete: false
-        }
-        this.checkedForms[id] = newCheck
+        this.checkedForms[id] = item
       }
-      Object.keys(this.checkedForms).forEach(item => {
-        if (parseInt(item) === parseInt(id)) {
-          this.checkedForms[id][check] = value
-        }
-      })
       this.$emit('updateForms', this.checkedForms)
     }
   }

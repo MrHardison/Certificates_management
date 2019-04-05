@@ -55,7 +55,6 @@
 import VTable from '~/components/table/vTable'
 import ButtonRounded from '~/components/buttonRounded/buttonRounded'
 import VModal from '~/components/vModal/vModal'
-
 export default {
   name: 'Name',
   components: { VModal, ButtonRounded, VTable },
@@ -69,6 +68,7 @@ export default {
   },
   data() {
     return {
+      users: null,
       search_text: '',
       orderBy: {},
       page: 1,
@@ -121,10 +121,12 @@ export default {
       }
     }
   },
-  asyncComputed: {
-    async users() {
-      this.isLoading = true
-      return await this.$api()
+  mounted() {
+    this.getUsers()
+  },
+  methods: {
+    getUsers() {
+      this.$api()
         .users.get({
           page: this.page,
           search_text: this.search_text,
@@ -132,12 +134,13 @@ export default {
           order_by_direction: this.orderBy.sortingDirection,
           interval: this.interval
         })
+        .then(res => {
+          this.users = this.$timezone(res)
+        })
         .finally(() => {
           this.isLoading = false
         })
-    }
-  },
-  methods: {
+    },
     generateActions(row) {
       let actions = []
       this.$order(this.tBodyRules.actions).forEach(item => {

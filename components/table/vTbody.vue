@@ -52,13 +52,6 @@
       <template v-if="tbody.length === 0">
         <div class="col-12 text-center py-5">
           <h4 class="text-center">Nothing to show</h4>
-          <!--<button-rounded-->
-          <!--class="mt-5"-->
-          <!--@click="method">-->
-          <!--<span class="text">-->
-          <!--Back-->
-          <!--</span>-->
-          <!--</button-rounded>-->
         </div>
       </template>
     </div>

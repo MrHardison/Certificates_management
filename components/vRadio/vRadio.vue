@@ -54,15 +54,12 @@ export default {
     }
   },
   mounted() {
-    let count = 0
     this.options.forEach(item => {
       if (item.selected && item.selected === true) {
         this.model = item.value
-      } else if (item.selected !== false) {
-        ++count
       }
     })
-    if (count > 0) {
+    if (this.selected.length > 0) {
       this.model = this.selected
     }
     this.$emit('change', this.model)
@@ -87,7 +84,8 @@ export default {
     position: relative;
 
     &::before {
-      background: #000;
+      border: 1px solid $blue;
+      background: #fff;
       border-radius: 50%;
       box-sizing: border-box;
       content: '';
@@ -100,16 +98,19 @@ export default {
     }
   }
 }
-.radio input:checked + .radio__text:after {
+.radio input:checked + .radio__text::after {
   background: #fff;
   border-radius: 50%;
   content: '';
   font-weight: normal;
-  left: 3px;
-  height: 8px;
+  left: 4px;
+  height: 6px;
   top: 50%;
   transform: translateY(-50%);
   position: absolute;
-  width: 8px;
+  width: 6px;
+}
+.radio input:checked + .radio__text::before {
+  background: $blue;
 }
 </style>

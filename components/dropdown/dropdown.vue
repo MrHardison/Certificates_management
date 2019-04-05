@@ -28,7 +28,7 @@
         @keyup="debounceSearch">
       <ul
         class="options">
-        <template v-for="(option, index) in options">
+        <template v-for="(option, index) in filteredOptions">
           <li
             :key="index"
             :class="{active: option === selected}"
@@ -69,6 +69,20 @@ export default {
       debounceSearch: null
     }
   },
+  computed: {
+    filteredOptions() {
+      if (this.showSearch) {
+        return _.filter(this.options, option => {
+          return (
+            option.title.toLowerCase().indexOf(this.searchText.toLowerCase()) >
+            -1
+          )
+        })
+      } else {
+        return this.options
+      }
+    }
+  },
   created() {
     this.debounceSearch = _.debounce(() => {
       this.$emit('filter', this.searchText)
@@ -83,15 +97,15 @@ export default {
     hideDropdown() {
       this.open = false
     },
-    handleScroll(e) {
-      if (!this.enablePagination) {
-        return
-      }
-      const target = e.target
-      if (target.scrollHeight - target.clientHeight - target.scrollTop < 5) {
-        this.debounceScroll()
-      }
-    },
+    // handleScroll(e) {
+    //   if (!this.enablePagination) {
+    //     return
+    //   }
+    //   const target = e.target
+    //   if (target.scrollHeight - target.clientHeight - target.scrollTop < 5) {
+    //     this.debounceScroll()
+    //   }
+    // },
     getOptionView(option) {
       if (typeof option === 'string' || typeof option === 'number') {
         return option
@@ -107,15 +121,15 @@ export default {
     selectOption(option) {
       this.hideDropdown()
 
-      if (typeof option === 'string' || typeof option === 'number') {
-        this.$emit('update', this.options.indexOf(option))
-      } else if (typeof option === 'object' && option.hasOwnProperty('id')) {
-        this.$emit('update', this.options.indexOf(option.id))
-      } else if (typeof option === 'object' && !option.hasOwnProperty('id')) {
-        this.$emit('update', this.options.indexOf(option))
-      }
-      // this.$emit('update', this.options.indexOf(option))
       this.selected = this.getOptionView(option)
+      if (typeof option === 'string' || typeof option === 'number') {
+        return this.$emit('update', this.options.indexOf(option))
+      } else if (typeof option === 'object' && option.hasOwnProperty('id')) {
+        return this.$emit('update', option)
+      } else if (typeof option === 'object' && !option.hasOwnProperty('id')) {
+        return this.$emit('update', this.options.indexOf(option))
+      }
+      this.$emit('update', this.options.indexOf(option))
     }
   }
 }

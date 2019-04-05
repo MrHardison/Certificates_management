@@ -16,6 +16,11 @@
                       :placeholder="element.element_label"
                       :limits="element.hasOwnProperty('limits') && element.limits.hasOwnProperty('char') ? element.limits.char : {}"
                       :computed_value="recordGroup[index]"
+                      :field-name="element.field_name"
+                      :validate="element.validate"
+                      :required="element.required"
+                      :validation-message="element.validation_message"
+                      @validationError="checkValidationErrors($event)"
                       @update="recordGroup[index] = $event"/>
                   </template>
                 </div>
@@ -35,6 +40,7 @@
             Delete
           </button-rounded>
           <button-rounded
+            :class="{disabled: validationErrors.length > 0}"
             class="btn-green rounded small mr-2"
             @click.native="updateRecord">
             Save
@@ -77,6 +83,7 @@ import VModal from '~/components/vModal/vModal'
 import VTable from '~/components/table/vTable'
 import SpinerLoader from '~/components/spinerLoader'
 import VRecordGroupTabs from '~/blocks/vRecordGroupTabs/vRecordGroupTabs'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'Id',
@@ -102,48 +109,79 @@ export default {
   },
   data() {
     return {
+      dataGroup: {},
+      validationErrors: [],
       recordGroup: {},
       showModal: false,
       isLoading: false
     }
   },
-  asyncComputed: {
-    async dataGroup() {
-      if (
-        this.dataListGroupId === 0 &&
-        typeof this.$route.params.id === 'undefined'
-      ) {
-        return null
-      } else if (typeof this.$route.params.id !== 'undefined') {
-        this.isLoading = true
-        await this.$api()
-          .recordGroups.getById(this.$route.params.id)
-          .then(res => {
-            this.recordGroup = res.data
-          })
-        return await this.$api()
-          .dataGroups.getById(this.dataListGroupId)
-          .finally(() => {
-            this.isLoading = false
-          })
-      }
-    }
+  computed: {
+    ...mapGetters({ getToken: 'token/getApiToken' })
+  },
+  mounted() {
+    this.getDataGroup()
   },
   methods: {
+    getDataGroup() {
+      if (this.dataListGroupId === 0 && this.$route.params.id) {
+        return
+      } else if (this.$route.params.id) {
+        this.isLoading = true
+        this.$api()
+          .recordGroups.getById(this.$route.params.id)
+          .then(res => {
+            if (_.isPlainObject(res.data)) {
+              this.recordGroup = res.data
+            }
+            if (res.data_list_group_id !== this.dataListGroupId) {
+              this.$router.push({
+                name: 'error'
+              })
+            }
+          })
+        if (this.getToken) {
+          this.$api()
+            .dataGroups.getById(this.dataListGroupId)
+            .then(res => {
+              this.dataGroup = res
+            })
+            .finally(() => {
+              this.isLoading = false
+            })
+        }
+      }
+    },
     updateRecord() {
-      this.$api().recordGroups.updateById(this.$route.params.id, {
-        data: this.recordGroup
-      })
+      if (this.validationErrors.length === 0) {
+        this.$api().recordGroups.updateById(this.$route.params.id, {
+          data: this.recordGroup
+        })
+      }
     },
     deleteRecord() {
       this.$api()
         .recordGroups.deleteById(this.$route.params.id)
         .then(() => {
           this.$router.push({
-            name: 'data-groups-roles',
+            name: 'data-groups-:name',
             params: { name: this.$route.params.name }
           })
         })
+    },
+    checkValidationErrors(error) {
+      if (error[1] === false) {
+        if (this.validationErrors.indexOf(error[0]) >= 0) {
+          this.validationErrors.splice(
+            this.validationErrors.indexOf(error[0]),
+            1
+          )
+        }
+      } else if (error[1] === true) {
+        if (this.validationErrors.indexOf(error[0]) < 0) {
+          this.validationErrors.push(error[0])
+        }
+      }
     }
   }
 }

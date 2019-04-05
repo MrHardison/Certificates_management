@@ -8,14 +8,14 @@
         @update="$emit('setName', $event)"/>
     </div>
     <div class="col-md-6 text-right">
-      <a
-        :href="form.blank"
+      <button
         class="form-link"
-        target="_blank">
+        @click.prevent="$emit('openPdf')">
         <fa :icon="['fal', 'file']"/>
         Preview
-      </a>
+      </button>
       <button
+        :class="{disabled: validationErrors.length > 0}"
         class="form-link save"
         @click="$emit('updateCertificate')">
         <fa :icon="['fal', 'save']"/>
@@ -42,10 +42,13 @@ export default {
       default() {
         return {}
       }
+    },
+    validationErrors: {
+      type: Array,
+      default() {
+        return []
+      }
     }
-  },
-  data() {
-    return {}
   }
 }
 </script>
@@ -74,13 +77,21 @@ export default {
   svg {
     margin-right: 10px;
   }
-
   &.save {
     background: #90ca2a;
     color: #fff;
 
     &:hover {
       background: #7fb325;
+    }
+  }
+
+  &.disabled {
+    cursor: default;
+    background: $gray;
+
+    &:hover {
+      background: $gray;
     }
   }
 }

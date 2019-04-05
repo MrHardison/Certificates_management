@@ -62,7 +62,9 @@ export default {
     pages() {
       const pages = this.getMenuPage('roles-and-permissions')
       if (pages && pages.properties.hasOwnProperty('sub_pages')) {
-        return pages.properties.sub_pages
+        return _.filter(pages.properties.sub_pages, tab => {
+          return tab.hasOwnProperty('visible') && tab.visible
+        })
       }
       return []
     },

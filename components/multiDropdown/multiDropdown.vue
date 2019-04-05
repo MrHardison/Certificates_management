@@ -24,11 +24,10 @@
         v-model="searchText"
         type="text"
         placeholder="Search"
-        class="form-control form-control-sm border-0"
-        @keyup="debounceSearch">
+        class="form-control form-control-sm border-0">
       <ul
         class="options">
-        <template v-for="(option, index) in options">
+        <template v-for="(option, index) in filteredOptions">
           <template v-if="typeof option === 'object' && option.hasOwnProperty('options')">
             <li
               :key="index"
@@ -93,9 +92,24 @@ export default {
       debounceSearch: null
     }
   },
+  computed: {
+    filteredOptions() {
+      return _.filter(this.options, option => {
+        let arr = []
+        _.forEach(option.options, item => {
+          if (
+            item.name.toLowerCase().indexOf(this.searchText.toLowerCase()) > -1
+          ) {
+            arr.push(item)
+          }
+        })
+        return arr
+      })
+    }
+  },
   created() {
     this.debounceSearch = _.debounce(() => {
-      this.$emit('filter', this.searchText)
+      this.$emit('filter', this.inputText)
     }, 1000)
   },
   mounted() {

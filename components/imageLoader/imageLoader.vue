@@ -1,19 +1,38 @@
 <template>
   <div>
-    <div v-if="!image">
+    <div>
+      <div
+        v-if="image"
+        class="image-loader">
+        <div
+          v-if="isLoading"
+          class="content-loading">
+          <spinner-loader />
+        </div>
+        <img
+          :src="imageUrl"
+          class="img-fluid">
+      </div>
       <input
-        class="btn"
+        ref="imageForm"
+        class="fileInput"
         type="file"
-        accept="image/*"
-        style="margin-bottom: 1.25rem;"
-        @change="onFileChange">
+        @change="createImage">
     </div>
+    <button-rounded
+      v-if="!image"
+      class="btn-md btn-green rounded bold medium"
+      @click.native="$refs.imageForm.click()">
+      <span class="text">
+        Upload image
+      </span>
+      <fa
+        :icon="['fa', 'trash']"
+        class="ml-4"/>
+    </button-rounded>
     <div
       v-else
       class="image_isset">
-      <img
-        :src="image"
-        class="img-fluid">
       <button-rounded
         class="btn-smoke rounded bold floated-icon medium clear_signature"
         style="margin: 1.25rem 0;"
@@ -29,11 +48,12 @@
 
 <script>
 import validUrl from 'valid-url'
-import ButtonRounded from '@/components/buttonRounded'
+import ButtonRounded from '~/components/buttonRounded'
+import SpinnerLoader from '~/components/spinerLoader'
 
 export default {
   name: 'ImageLoader',
-  components: { ButtonRounded },
+  components: { ButtonRounded, SpinnerLoader },
   props: {
     parent_image: {
       type: String,
@@ -42,65 +62,86 @@ export default {
   },
   data() {
     return {
-      image: validUrl.isUri(this.parent_image)
-        ? this.parent_image
-        : 'data:image/png;base64,' + this.parent_image
-    }
-  },
-  watch: {
-    image: {
-      deep: true,
-      handler(image) {
-        if (image) {
-          this.$emit('update', image.split(',')[1])
-        } else {
-          this.$emit('update', '')
-        }
-      }
+      imageUrl: '',
+      image: false,
+      isLoading: true
     }
   },
   mounted() {
-    if (typeof this.parent_image === 'undefined' || this.parent_image === '') {
-      this.image = false
+    if (this.parent_image && this.parent_image.length > 0) {
+      this.isLoading = true
+      this.image = true
+      this.getImageByUrl(this.parent_image)
     }
   },
   methods: {
-    onFileChange(e) {
-      let files = e.target.files || e.dataTransfer.files
-      if (!files.length) return
-      this.createImage(files[0])
-    },
-    createImage(file) {
-      let image = new Image()
-      let reader = new FileReader()
-      let vm = this
-
-      reader.onload = e => {
-        vm.image = e.target.result
+    createImage(event) {
+      let fd = new FormData()
+      if (event.target.files && event.target.files[0]) {
+        fd.append('file', event.target.files[0], event.target.files[0].name)
+        this.uploadImage(fd)
       }
-      reader.readAsDataURL(file)
     },
-    removeImage: function(e) {
+    uploadImage(img) {
+      this.image = true
+      this.isLoading = true
+      this.$api()
+        .upload.upload(img)
+        .then(res => {
+          if (res.data) {
+            this.getImageByUrl(res.data)
+          }
+        })
+    },
+    getImageByUrl(url) {
+      this.$api()
+        .upload.getImageByUrl(url)
+        .then(res => {
+          this.imageUrl = URL.createObjectURL(res)
+          this.$emit('update', url)
+          this.isLoading = false
+        })
+    },
+    removeImage() {
       this.image = false
+      this.imageUrl = ''
+      this.$emit('update', this.imageUrl)
     }
   }
 }
 </script>
 
 <style lang="scss">
-.btn {
-  background-color: $white;
-}
+.image-loader {
+  min-height: 210px;
+  border: 1px solid #cfd4dd;
+  position: relative;
 
-.image_isset {
+  .content-loading {
+    align-items: center;
+    background: #fff;
+    height: 100%;
+    display: flex;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    justify-content: center;
+    width: 100%;
+  }
+
   img {
     display: block;
     border: 1px solid #cfd4dd;
   }
 }
 
+.fileInput {
+  display: none;
+}
+
 @include mq($max-width: 425px) {
-  .image_isset {
+  .image {
     text-align: center;
   }
 }

@@ -22,7 +22,7 @@
         <div class="col col-12 col-sm-12 col-md-4 search">
           <input-standard
             :computed_value="search_text"
-            placeholder="Type the text"
+            placeholder="Type to search"
             class="search-input"
             @update="search($event)"/>
         </div>

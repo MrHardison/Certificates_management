@@ -64,7 +64,14 @@ export default {
   },
   methods: {
     createRole() {
-      this.$api().roles.create(this.updatedRole)
+      this.$api()
+        .roles.create(this.updatedRole)
+        .then(res => {
+          this.$router.push({
+            name: 'roles-and-permissions-roles-:id',
+            params: { id: res.data.data.id }
+          })
+        })
     },
     async setRole() {
       this.isLoading = true

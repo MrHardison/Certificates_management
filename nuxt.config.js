@@ -24,6 +24,10 @@ module.exports = {
         rel: 'stylesheet',
         href:
           'https://fonts.googleapis.com/css?family=Montserrat:100,200,300,400,500,600,700,800,900&subset=latin-ext'
+      },
+      {
+        rel: 'stylesheet',
+        href: 'https://use.fontawesome.com/releases/v5.7.2/css/all.css'
       }
     ]
   },
@@ -52,10 +56,10 @@ module.exports = {
     '~/plugins/vue-async-computed',
     '~/plugins/lodash',
     '~/plugins/order',
+    '~/plugins/timezone',
     '~/plugins/api',
     { src: '~/plugins/localStorage.js', ssr: false },
-    { src: '~/plugins/notifications', ssr: false },
-    { src: '~/plugins/datepicker', ssr: false }
+    { src: '~/plugins/notifications', ssr: false }
   ],
 
   /*
@@ -101,10 +105,8 @@ module.exports = {
   ** Axios module configuration
   */
   axios: {
-    // See https://github.com/nuxt-community/axios-module#options
     baseURL:
-      // 'http://localhost/api/v3/web'
-      'http://swfy-weworktogethersoftware-staging.eks.swfy.co.uk/api/v3/web'
+      'https://swfy-weworktogethersoftware-staging.eks.swfy.co.uk/api/v3/web'
   },
 
   /*

@@ -1,11 +1,22 @@
 <template>
-  <div 
-    id="signature-pad" 
+  <div
+    id="signature-pad"
     class="signature-pad">
     <div class="signature">
-      <canvas :id="id"/>
+      <div
+        v-if="isLoading"
+        class="content-loading">
+        <spinner-loader />
+      </div>
+      <canvas
+        ref="canvas"
+        :id="id"/>
     </div>
-    <button-rounded 
+    <input
+      ref="imageForm"
+      type="file"
+      style="display:none">
+    <button-rounded
       class="btn-smoke rounded bold floated-icon medium clear_signature"
       @click.native="clearSignature()">
       <span class="text">
@@ -23,12 +34,12 @@ import SignaturePad from 'signature_pad'
 import Vue from 'vue'
 import VueResource from 'vue-resource'
 import buttonRounded from '../buttonRounded'
-
+import SpinnerLoader from '~/components/spinerLoader'
 Vue.use(VueResource)
 
 export default {
   name: 'Signature',
-  components: { buttonRounded },
+  components: { buttonRounded, SpinnerLoader },
   props: {
     id: {
       type: String,
@@ -41,57 +52,65 @@ export default {
     data: {
       type: Object,
       default() {
-        return {}
+        return {
+          canvas: null,
+          context: null
+        }
       }
     }
   },
   data() {
     return {
-      signaturePad: false
+      signaturePad: false,
+      isLoading: false
     }
   },
   mounted() {
-    let canvas = document.querySelector('#' + this.id)
+    this.canvas = this.$refs.canvas
+    this.context = this.canvas.getContext('2d')
     let ratio = Math.max(window.devicePixelRatio || 1, 1)
     let w = Math.max(
       document.documentElement.clientWidth,
       window.innerWidth || 0
     )
     if (w <= 425) {
-      canvas.width = canvas.offsetWidth * ratio
-      canvas.height =
-        ((((this.data.limits.image.width - canvas.offsetWidth) /
-          canvas.offsetWidth) *
+      this.canvas.width = this.canvas.offsetWidth * ratio
+      this.canvas.height =
+        ((((this.data.limits.image.width - this.canvas.offsetWidth) /
+          this.canvas.offsetWidth) *
           100) /
           100) *
         this.data.limits.image.height *
         ratio
     } else {
-      canvas.width = this.data.limits.image.width * ratio
-      canvas.height = this.data.limits.image.height * ratio
+      this.canvas.width = this.data.limits.image.width * ratio
+      this.canvas.height = this.data.limits.image.height * ratio
     }
-    canvas.getContext('2d').scale(ratio, ratio)
+    this.context.scale(ratio, ratio)
 
-    let signaturePad = new SignaturePad(canvas, {
-      onEnd: () => {
-        this.$emit(
-          'update',
-          this.signaturePad.toDataURL('image/png').split(',')[1]
-        )
-      }
+    let signaturePad = new SignaturePad(this.canvas, {
+      onEnd: _.debounce(() => {
+        const URI = this.canvas.toDataURL()
+        const blob = this.dataURItoBlob(URI)
+        const fd = new FormData()
+        fd.append('file', blob)
+        this.uploadImage(fd)
+      }, 500)
     })
 
     if (this.signature) {
       if (validUrl.isUri(this.signature)) {
-        this.$http
-          .get(this.signature, { responseType: 'blob' })
-          .then(response => {
-            let reader = new window.FileReader()
-            reader.readAsDataURL(response.data)
-            reader.onloadend = function() {
-              signaturePad.fromDataURL(reader.result)
-            }
-          })
+        this.isLoading = true
+        this.getImageByUrl(this.signature, true)
+        // this.$http
+        //   .get(this.signature, { responseType: 'blob' })
+        //   .then(response => {
+        //     let reader = new window.FileReader()
+        //     reader.readAsDataURL(response.data)
+        //     reader.onloadend = () => {
+        //       signaturePad.fromDataURL(reader.result)
+        //     }
+        //   })
       } else {
         signaturePad.fromDataURL('data:image/png;base64,' + this.signature)
       }
@@ -101,6 +120,45 @@ export default {
   methods: {
     clearSignature() {
       this.signaturePad.clear()
+    },
+    uploadImage(img) {
+      this.$api()
+        .upload.upload(img)
+        .then(res => {
+          if (res.data) {
+            this.getImageByUrl(res.data)
+          }
+        })
+    },
+    getImageByUrl(url, status) {
+      this.$api()
+        .upload.getImageByUrl(url)
+        .then(res => {
+          if (status) {
+            let reader = new window.FileReader()
+            reader.readAsDataURL(res)
+            reader.onloadend = () => {
+              this.signaturePad.fromDataURL(reader.result)
+            }
+          }
+          this.isLoading = false
+          this.$emit('update', url)
+        })
+    },
+    dataURItoBlob(dataURI) {
+      let byteString
+      if (dataURI.split(',')[0].indexOf('base64') >= 0)
+        byteString = atob(dataURI.split(',')[1])
+      else byteString = unescape(dataURI.split(',')[1])
+      let mimeString = dataURI
+        .split(',')[0]
+        .split(':')[1]
+        .split(';')[0]
+      let ia = new Uint8Array(byteString.length)
+      for (var i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i)
+      }
+      return new Blob([ia], { type: mimeString })
     }
   }
 }
@@ -109,11 +167,26 @@ export default {
 <style lang="scss">
 #signature-pad {
   .signature {
+    display: inline-flex;
+    position: relative;
+
+    .content-loading {
+      align-items: center;
+      background: #fff;
+      display: flex;
+      height: calc(100% - 2px);
+      left: 1px;
+      position: absolute;
+      top: 1px;
+      justify-content: center;
+      width: calc(100% - 2px);
+    }
     canvas {
       border: 1px solid $secondary;
     }
   }
   .clear_signature {
+    display: block;
     margin: 10px 0;
     background-color: $secondary;
   }

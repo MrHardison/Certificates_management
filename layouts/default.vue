@@ -9,12 +9,15 @@
         </div>
       </div>
     </div>
-    <nav-bar/>
+    <nav-bar>
+      <breadcrumb
+        :route="$route"
+        class="d-none d-sm-inline-flex"/>
+    </nav-bar>
     <div
       :class="{closed: isClosed}"
       class="page-content">
-      <!-- <breadcrumb class="d-none d-sm-inline-block"/> -->
-      <nuxt/>
+      <nuxt @breadcrumb="''"/>
     </div>
     <notifications
       group="alerts"/>
@@ -40,11 +43,7 @@ export default {
   mounted() {
     this.showPreloader = true
     if (this.$store.getters['token/getApiToken']) {
-      const user = this.$api()
-        .user.get({ ui_id: 5 })
-        .then(res => {
-          this.setUser(res)
-        })
+      const user = this.$api().user.get()
       const ui = this.$api()
         .menu.ui()
         .then(res => {
@@ -72,8 +71,7 @@ export default {
   methods: {
     ...mapMutations({
       toggleMenu: 'menu/toggleMenu',
-      reload: 'menu/reload',
-      setUser: 'user/set'
+      reload: 'menu/reload'
     })
   }
 }

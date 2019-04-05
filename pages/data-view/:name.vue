@@ -7,10 +7,10 @@
         :tbody="tBody"
         :tfooter="tFooter"
         :is-loading="isLoading"
-        @set_page="page = $event"
-        @search_text="search_text = $event"
-        @order_by="orderBy = $event"
-        @interval="interval = $event">
+        @set_page="params.page = $event"
+        @search_text="debounceSearch($event)"
+        @order_by="setOrderBy($event)"
+        @interval="params.interval = $event">
         <template slot="header">
           <button-rounded
             class="btn-green rounded"
@@ -38,7 +38,7 @@
           </button-rounded>
           <button-rounded
             class="btn-green rounded small mr-2"
-            @click.native="deleteRecordGroup(deleteModal.id)">
+            @click.native="deleteItem(deleteModal.id)">
             Yes, delete this
           </button-rounded>
         </div>
@@ -50,10 +50,42 @@
         @close="isCreate = false">
         <template slot="body">
           <template v-if="formCategories">
-            <v-multi-dropdown
-              :options="formCategories"
-              class="dropdown_data-view-create"
-              @update="createFormId = $event"/>
+            <div
+              class="item-selector">
+              <input-standard
+                :label="'Search form'"
+                :search_icon="true"
+                @update="searchText = $event"/>
+              <div
+                class="content">
+                <ul
+                  class="parent-options">
+                  <template v-for="(option, index) in filteredOptions">
+                    <template v-if="typeof option === 'object' && option.hasOwnProperty('options')">
+                      <li
+                        :key="index"
+                        class="option">
+                        <b> {{ option.title }} </b>
+                        <template v-if="option.hasOwnProperty('options')">
+                          <ul
+                            class="options">
+                            <template v-for="(child, c_index) in option.options">
+                              <li
+                                :key="c_index"
+                                :class="{active: createFormId === child.id}"
+                                class="option"
+                                @click="createFormId = child.id">
+                                {{ child.name }}
+                              </li>
+                            </template>
+                          </ul>
+                        </template>
+                      </li>
+                    </template>
+                  </template>
+                </ul>
+              </div>
+            </div>
           </template>
           <template v-else>
             Please wait
@@ -85,11 +117,12 @@
 import VTable from '~/components/table/vTable'
 import ButtonRounded from '~/components/buttonRounded/buttonRounded'
 import VModal from '~/components/vModal/vModal'
-import VMultiDropdown from '../../components/multiDropdown/multiDropdown'
+import InputStandard from '~/components/inputStandard/'
+import { mapGetters, mapMutations } from 'vuex'
 
 export default {
   name: 'Name',
-  components: { VMultiDropdown, VModal, ButtonRounded, VTable },
+  components: { VModal, ButtonRounded, VTable, InputStandard },
   props: {
     dataView: {
       type: Object,
@@ -100,13 +133,20 @@ export default {
   },
   data() {
     return {
+      searchText: '',
+      certificates: null,
       isCreate: false,
       createFormId: null,
-      search_text: '',
-      orderBy: {},
-      page: 1,
       isLoading: true,
-      interval: 10,
+      dateChange: false,
+      formCategories: [],
+      params: {
+        page: 1,
+        search_text: '',
+        order_by_column: null,
+        order_by_direction: null,
+        interval: 10
+      },
       deleteModal: {
         show: false,
         id: null
@@ -114,6 +154,9 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({
+      getToken: 'token/getApiToken'
+    }),
     tBodyRules() {
       if (!this.dataView && this.dataView.hasOwnProperty('body_rules')) {
         return []
@@ -152,45 +195,73 @@ export default {
         total: this.certificates.total,
         last: this.certificates.last_page
       }
+    },
+    filteredOptions() {
+      const base = []
+      _.forEach(this.formCategories, item => {
+        base.push(_.assign({}, item))
+      })
+      const modified = _.map(base, option => {
+        option.options = _.filter(option.options, innerOption => {
+          return (
+            innerOption.name
+              .toLowerCase()
+              .indexOf(this.searchText.toLowerCase()) > -1
+          )
+        }).slice()
+        return option
+      })
+      return _.filter(modified, topOption => {
+        return topOption.options.length
+      })
     }
   },
-  asyncComputed: {
-    async certificates() {
+  watch: {
+    params: {
+      deep: true,
+      handler(data) {
+        this.getCertificates()
+      }
+    }
+  },
+  mounted() {
+    this.getCertificates()
+    this.getFormCategories()
+  },
+  methods: {
+    getFormCategories() {
+      if (this.getToken) {
+        this.$api()
+          .dataView.create()
+          .then(res => {
+            const modifiedResponse = res
+              .map(item => {
+                item.title = item.name
+                item.options = item.forms.map(option => {
+                  option.title = option.name
+                  return option
+                })
+                return item
+              })
+              .slice()
+            this.formCategories = modifiedResponse
+          })
+      }
+    },
+    getCertificates() {
       if (this.$route.params.hasOwnProperty('id')) {
         return null
       }
       this.isLoading = true
-      return await this.$api()
-        .dataView.get({
-          page: this.page,
-          search_text: this.search_text,
-          order_by_column: this.orderBy.orderBy,
-          order_by_direction: this.orderBy.sortingDirection,
-          interval: this.interval
+      this.$api()
+        .dataView.get(this.params)
+        .then(res => {
+          this.certificates = this.$timezone(res)
         })
         .finally(() => {
           this.isLoading = false
         })
     },
-    formCategories() {
-      return this.$api()
-        .dataView.create()
-        .then(res => {
-          return res.map(item => {
-            item.title = item.name
-            item.options = item.forms.map(option => {
-              option.title = option.name
-              return option
-            })
-            return item
-          })
-        })
-    }
-  },
-  updated() {
-    this.certificates
-  },
-  methods: {
     generateActions(row) {
       let actions = []
       this.$order(this.tBodyRules.actions).forEach(item => {
@@ -229,12 +300,12 @@ export default {
       })
       return columns
     },
-    async deleteRecordGroup(id) {
+    async deleteItem(id) {
       if (id) {
         await this.$api()
           .dataView.deleteById(id)
           .then(res => {
-            document.location.reload(true)
+            this.getCertificates()
           })
       }
       this.deleteModal.show = false
@@ -256,19 +327,35 @@ export default {
             this.isCreate = false
           })
       }
+    },
+    orderBy(orderBy) {
+      this.params.order_by_column = orderBy.orderBy
+      this.params.order_by_direction = orderBy.sortingDirection
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
-// .dropdown_data-view-create {
-//   min-height: 38px;
-//   height: auto;
+.parent-options {
+  height: 350px;
+  overflow-y: auto;
+  overflow-x: hidden;
 
-//   .content {
-//     position: relative;
-//     top: 0;
-//   }
-// }
+  .options {
+    .option {
+      box-sizing: border-box;
+      cursor: pointer;
+      padding: 5px 10px;
+
+      &:hover {
+        background: $secondary;
+      }
+      &.active {
+        background: $secondary;
+        cursor: default;
+      }
+    }
+  }
+}
 </style>

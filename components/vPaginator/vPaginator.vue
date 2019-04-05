@@ -15,7 +15,7 @@
             @click="$emit('changePage', prevPage())">
             <fa :icon="['fal', 'arrow-circle-left']"/>
           </li>
-          <template v-if="visiblePages !== undefined && showFirstPage">
+          <template v-if="showFirstPage">
             <div
               class="item item__first"
               @click="$emit('changePage', 1)">

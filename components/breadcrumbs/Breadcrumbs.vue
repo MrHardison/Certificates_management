@@ -3,12 +3,11 @@
     <template v-for="(item, index) in items">
       <li
         :key="index"
-        :class="{active: item.route}"
-        class="breadcrumb__item">
-        <nuxt-link :to="{'name':item.route}">
-          <fa
+        class="breadcrumb__item active">
+        <nuxt-link :to="{name: item.name}">
+          <!-- <fa
             :icon="['fal', item.icon]"
-            class="icon"/>
+            class="icon"/> -->
           <span class="text">
             {{ item.title }}
           </span>
@@ -24,23 +23,37 @@
 <script>
 export default {
   name: 'Breadcrumbs',
-  props: {
-    items: {
-      type: Array,
-      default() {
-        return [
-          {
-            title: 'Customers',
-            icon: 'user',
-            route: {
-              name: 'data-groups-:name',
-              params: {
-                name: 'customers',
-                id: '951'
-              }
-            }
-          }
-        ]
+  data() {
+    return {}
+  },
+  computed: {
+    items() {
+      let items = []
+      if (this.$route.matched) {
+        this.$route.matched.forEach((link, index) => {
+          items.push(
+            Object.assign(
+              {
+                title: this.getItemTitle(index)
+              },
+              link
+            )
+          )
+        })
+      }
+      if (items.length === 0) {
+        items.push({ path: '/', title: 'index' })
+      }
+      return items
+    }
+  },
+  methods: {
+    getItemTitle(index) {
+      if (this.$route.hasOwnProperty('fullPath')) {
+        const title = this.$route.fullPath.split('/')[index + 1]
+        return title.length > 0
+          ? `${title.charAt(0).toUpperCase()}${title.slice(1)}`
+          : 'Home'
       }
     }
   }
@@ -58,56 +71,30 @@ export default {
   list-style: none;
   line-height: 16px;
   margin: 0 0 0 15px;
-  padding: 4px 15px 4px 10px;
+  padding: 4px 15px 4px 15px;
   vertical-align: middle;
 
   &__item {
-    cursor: default;
+    color: $main_blue;
     display: inline-block;
     margin-right: 10px;
     vertical-align: middle;
 
-    &.active {
-      a {
-        cursor: pointer;
-
-        &:hover {
-          .text {
-            text-decoration: underline;
-          }
-        }
-
-        .text {
-          color: $main_blue;
-        }
-      }
-    }
-    &:last-child {
-      a {
-        svg {
-          display: inline-block;
-        }
-      }
-      svg {
-        display: none;
-      }
-    }
-    svg {
-      margin-left: 5px;
-      vertical-align: middle;
-    }
     a {
       cursor: default;
 
       &:hover {
-        text-decoration: none;
+        .text {
+          text-decoration: underline;
+        }
       }
 
       svg {
         margin: 0 5px 0 0;
       }
       .text {
-        color: #636c72;
+        cursor: pointer;
+        color: $main_blue;
         display: inline-block;
         font-size: 14px;
         max-width: 130px;
@@ -117,6 +104,30 @@ export default {
         vertical-align: middle;
         white-space: nowrap;
       }
+    }
+    &:last-child {
+      margin-right: 0;
+      a {
+        &:hover {
+          .text {
+            text-decoration: none;
+          }
+        }
+        svg {
+          display: inline-block;
+        }
+        .text {
+          color: #636c72;
+          cursor: default;
+        }
+      }
+      svg {
+        display: none;
+      }
+    }
+    svg {
+      margin-left: 10px;
+      vertical-align: middle;
     }
   }
 }

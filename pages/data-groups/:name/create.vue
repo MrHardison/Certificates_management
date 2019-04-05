@@ -15,7 +15,11 @@
                       :label="element.element_label"
                       :placeholder="element.element_label"
                       :limits="element.hasOwnProperty('limits') && element.limits.hasOwnProperty('char') ? element.limits.char : {}"
+                      :field-name="element.field_name"
+                      :validate="element.validate"
+                      :required="element.required"
                       :computed_value="recordGroup[index]"
+                      @error="checkinputErrors($event)"
                       @update="recordGroup[index] = $event"/>
                   </template>
                 </div>
@@ -26,7 +30,7 @@
                 <label class="label">Parent</label>
                 <dropdown
                   :options="options"
-                  :enable-pagination="true"
+                  :show-search="true"
                   @update="selectedOption = $event"/>
               </div>
             </template>
@@ -38,12 +42,8 @@
           </div>
         </div>
         <div class="card-footer d-flex justify-content-end">
-          <!-- <button-rounded
-            class="btn-smoke rounded small mr-2"
-            @click.native="showModal = true">
-            Cancel
-          </button-rounded> -->
           <button-rounded
+            :class="{disabled: disableSubmit}"
             class="btn-green rounded small mr-2"
             @click.native="addRecord">
             Add
@@ -91,7 +91,19 @@ export default {
       options: [],
       selectedOption: null,
       page: 1,
-      parentOptions: []
+      disableSubmit: false,
+      parentOptions: [],
+      inputErrors: []
+    }
+  },
+  watch: {
+    selectedOption: {
+      deep: true,
+      handler(data) {
+        if (this.dataListGroupId === 2 && data) {
+          this.disableSubmit = false
+        }
+      }
     }
   },
   mounted() {
@@ -100,6 +112,9 @@ export default {
       .then(res => {
         this.dataGroup = res
         this.data_list_group_id = res.data_list_group_id
+        if (this.dataListGroupId === 2 && !this.selectedOption) {
+          this.disableSubmit = true
+        }
       })
       .finally(() => {
         this.isLoading = false
@@ -108,12 +123,19 @@ export default {
   },
   methods: {
     addRecord() {
+      if (this.selectedOption && this.dataListGroupId === 2) {
+        this.addRecordGroup(this.dataListGroupId)
+      } else {
+        if (this.dataListGroupId !== 2) {
+          this.addRecordGroup()
+        }
+      }
+    },
+    addRecordGroup(dataListGroupId) {
       this.$api()
         .recordGroups.add({
           record_group_id:
-            this.data_list_group_id === 0
-              ? this.record_group_id
-              : this.optionId(),
+            dataListGroupId === 2 ? this.getOptionId() : this.record_group_id,
           data_list_group_id: this.dataListGroupId,
           data: this.recordGroup,
           deleted_at: null
@@ -127,7 +149,6 @@ export default {
             }
           })
         })
-        .catch(err => {})
     },
     getOptions() {
       this.$api()
@@ -161,10 +182,19 @@ export default {
           }
         })
     },
-    optionId() {
-      return this.selectedOption > -1
-        ? this.options[this.selectedOption].id
-        : null
+    getOptionId() {
+      return this.options[this.options.indexOf(this.selectedOption)].id
+    },
+    checkinputErrors(item) {
+      if (Object.keys(item)[0] === 'add') {
+        const isExist = _.find(this.inputErrors, item.add)
+        !isExist ? this.inputErrors.push(item.add) : ''
+      } else if (Object.keys(item)[0] === 'remove') {
+        const index = this.inputErrors.indexOf(item.remove)
+        if (index > -1) {
+          this.inputErrors.splice(index, 1)
+        }
+      }
     }
   }
 }

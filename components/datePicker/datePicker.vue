@@ -3,12 +3,13 @@
     <label class="label">{{ name }}</label>
     <date-pick
       v-model="date"
-      :format="format" 
+      :format="format"
       :pick-time="time"
-      class="form-control datetime"                                                   
-      placeholder="Select date"               
+      :input-attributes="{readonly: true}"
+      class="form-control datetime"
+      placeholder="Select date"
       name="date"
-      @input="$emit('date', $event)"/>  
+      @input="$emit('date', $event)"/>
   </div>
 </template>
 <script>
@@ -21,7 +22,7 @@ export default {
   props: {
     format: {
       type: String,
-      default: 'YYYY-MM-DD'
+      default: 'DD-MM-YYYY'
     },
     time: {
       type: Boolean,

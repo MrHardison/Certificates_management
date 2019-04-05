@@ -9,6 +9,24 @@
       }
     }
   }
+  &.left-icon {
+    .control-body {
+      .form-control {
+        cursor: pointer;
+        padding-left: 30px;
+      }
+      .input-icon {
+        left: 10px !important;
+      }
+    }
+  }
+  &.default {
+    .control-body {
+      .form-control {
+        cursor: default;
+      }
+    }
+  }
   label {
     color: $gray;
     font-size: 16px;
@@ -24,12 +42,23 @@
       &::placeholder {
         color: $secondary !important;
       }
-      &.is-error {
-        border-color: $input_error;
-      }
       &.is-warning {
         border-color: $input_warning;
       }
+      &.is-error {
+        border-color: $input_error;
+      }
+      &.with-icon {
+        padding-right: 25px;
+      }
+    }
+    .input-icon {
+      color: #b1b1b1;
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
     }
     .message-warning,
     .message-error {
@@ -55,10 +84,11 @@
       text-align: right;
       cursor: default;
       font-size: 13px;
-      padding-left: .3rem;
+      padding: 0 .3rem;
 
       &.disabled {
         background: #e9ecef;
+        cursor: default;
       }
     }
   }

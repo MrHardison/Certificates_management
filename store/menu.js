@@ -13,13 +13,13 @@ export const mutations = {
 }
 
 export const getters = {
-  getMenuPage: ({ items }) => route => {
-    return _.find(items, { properties: { route } })
+  getMenuPage: state => route => {
+    return _.find(state.items, { properties: { route } })
   },
-  getMenuPages: state => {
+  getMenuPages(state) {
     return state.items
   },
-  isClosed: state => {
+  isClosed(state) {
     return state.isClosed
   }
 }

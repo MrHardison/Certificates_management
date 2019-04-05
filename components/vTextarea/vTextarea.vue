@@ -9,9 +9,9 @@
         :class="{limited:limits && limits.hasOwnProperty('max'), 'is-error': error, 'is-warning': warning}"
         :placeholder="placeholder"
         :readonly="disabled ? true : false"
+        :maxlength="limits.max ? parseInt(limits.max) : 200"
         v-model="value"
-        class="form-control"
-        @input="$emit('update', clip($event.target.value))"/>
+        class="form-control"/>
       <template v-if="limits && limits.hasOwnProperty('max')">
         <span class="limits">
           <span class="current">{{ value != null ? value.length : 0 }}</span>
@@ -94,30 +94,20 @@ export default {
         if (data == null) {
           data = ''
         }
-        data = this.clip(data)
         this.$emit('update', data)
+      }
+    },
+    computed_value: {
+      deep: true,
+      handler(data) {
+        this.value = data
       }
     }
   },
   mounted() {
-    this.upd()
+    this.value = this.computed_value
   },
-  updated() {
-    // this.upd()
-  },
-  methods: {
-    upd() {
-      if (this.computed_value || this.computed_value === '') {
-        this.value = this.clip(this.computed_value)
-      }
-    },
-    clip(data) {
-      if (this.limits && this.limits.hasOwnProperty('max')) {
-        data = _.truncate(data, {}, this.limits.max)
-      }
-      return data
-    }
-  }
+  methods: {}
 }
 </script>
 

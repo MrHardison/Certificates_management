@@ -13,4 +13,14 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.btn {
+  &.disabled {
+    cursor: default;
+    background: $gray;
+
+    &:hover {
+      background: $gray;
+    }
+  }
+}
 </style>

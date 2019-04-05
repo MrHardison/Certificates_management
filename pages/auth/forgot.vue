@@ -1,89 +1,96 @@
 <template>
-  <div class="forgot__wrap">
-    <div class="container_auth">
-      <div class="logo">
-        <img
-          src="/auth-logo.png"
-          alt="Logo">
-      </div>
-      <div class="card-block">
-        <div class="image">
+  <div>
+    <div
+      v-if="!tokenExist"
+      class="forgot__wrap">
+      <div class="container_auth">
+        <div class="logo">
           <img
-            src="/auth-image.png"
-            alt="Image">
+            src="/auth-logo.png"
+            alt="Logo">
         </div>
-        <div class="form">
-          <h1 class="welcome">Forgot Password</h1>
-          <p class="register">
-            Don't have an account?
-            <span>Try
-              <nuxt-link
-                :to="'/auth/register'"
-                class="">
-                We Work Together
-              </nuxt-link>
-              for Free.
-            </span>
-          </p>
-          <input-transparent
-            :label="'Email'"
-            :type="'text'"
-            :placeholder="'myname@email.com'"
-            @update="email = $event"/>
+        <div class="card-block">
+          <div class="image">
+            <img
+              src="/auth-image.png"
+              alt="Image">
+          </div>
+          <div class="form">
+            <h1 class="welcome">Forgot Password</h1>
+            <p class="register">
+              Don't have an account?
+              <span>Try
+                <nuxt-link
+                  :to="'/auth/register'"
+                  class="">
+                  We Work Together
+                </nuxt-link>
+                for Free.
+              </span>
+            </p>
+            <input-transparent
+              :label="'Email'"
+              :type="'text'"
+              :placeholder="'myname@email.com'"
+              @update="email = $event"/>
 
-          <div class="form-group">
-            <button
-              class="btn btn-md btn-green rounded bold"
-              @click="reset">
-              <div class="content">
-                Forgot
-                <fa
-                  :icon="['fa', 'unlock']"
-                  class="icon"/>
-              </div>
-            </button>
+            <div class="form-group">
+              <button
+                class="btn btn-md btn-green rounded bold"
+                @click="reset">
+                <div class="content">
+                  Reset password
+                  <fa
+                    :icon="['fa', 'unlock']"
+                    class="icon"/>
+                </div>
+              </button>
+            </div>
+            <div class="agreement">
+              By using this Service you agree to our
+              <a
+                href="https://softwareworksforyou.co.uk/terms-of-use/"
+                target="_blank"
+                class="blue">Terms of Use</a>
+              and
+              <a
+                href="https://softwareworksforyou.co.uk/privacy-policy/"
+                target="_blank"
+                class="blue">Privacy Policy</a>
+            </div>
+            <div class="footer">
+              <nuxt-link
+                :to="'/auth/login'"
+                class="vl">
+                Signup for Free
+              </nuxt-link>
+              <a
+                target="_blank"
+                href="https://weworktogethersoftware.com/contact-us">Help &amp; Support</a>
+            </div>
           </div>
-          <div class="agreement">
-            By using this Service you agree to our
-            <a 
-              href="https://softwareworksforyou.co.uk/terms-of-use/"
-              target="_blank"
-              class="blue">Terms of Use</a>
-            and
-            <a
-              href="https://softwareworksforyou.co.uk/privacy-policy/"
-              target="_blank"
-              class="blue">Privacy Policy</a>
-          </div>
-          <div class="footer">
+        </div>
+        <div class="footer-info">
+          <div class="vat">
+            Don't have an account?
             <nuxt-link
-              :to="'/auth/login'"
-              class="vl">
-              SignUp
+              :to="'/auth/register'"
+              class="register">
+              Try We Work Together for Free
             </nuxt-link>
-            <a
-              target="_blank"
-              href="https://weworktogethersoftware.com/contact-us">Help &amp; Support</a>
+            <span>
+              All prices in Pounds Sterling, excluding VAT.
+            </span>
           </div>
-        </div>
-      </div>
-      <div class="footer-info">
-        <div class="vat">
-          Don't have an account?
-          <nuxt-link
-            :to="'/auth/register'"
-            class="register">
-            Try We Work Together for Free
-          </nuxt-link>
-          <span>
-            All prices in Pounds Sterling, excluding VAT.
-          </span>
-        </div>
-        <div class="trial">
-          30 Day Free Trial with full access to all functions.
+          <div class="trial">
+            30 Day Free Trial with full access to all functions.
+          </div>
         </div>
       </div>
     </div>
+    <nuxt-child
+      v-if="tokenExist"
+      :key="$route.params.name" />
   </div>
 </template>
 
@@ -97,15 +104,16 @@ export default {
 
   data() {
     return {
+      tokenExist: false,
       email: ''
     }
   },
+  mounted() {
+    this.tokenExist = this.$route.params.token ? true : false
+  },
   methods: {
     reset() {
-      this.$api()
-        .auth.reset({ email: this.email })
-        .then(res => {})
-        .catch(err => {})
+      this.$api().auth.reset({ email: this.email })
     }
   }
 }
