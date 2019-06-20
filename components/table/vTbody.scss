@@ -31,7 +31,7 @@
     }
   }
 }
-@include mq($max-width: 767px) {
+@media (max-width: 767px) {
   .card-body {
     .table {
       width: 767px;

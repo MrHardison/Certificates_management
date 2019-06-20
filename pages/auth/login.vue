@@ -17,7 +17,6 @@
           <p class="register">
             Don't have an account?
             <span>Try
-
               <nuxt-link :to="'/auth/register'">
                 We Work Together
               </nuxt-link>
@@ -40,16 +39,15 @@
               Forgot
               <span class="blue">my password</span>
             </nuxt-link>
-            <button
+            <button-rounded
+              :preloading="preloading"
               class="btn btn-md btn-green rounded bold"
-              @click.prevent="login">
-              <div class="content">
-                LOGIN
-                <fa
-                  :icon="['fa', 'angle-right']"
-                  class="icon"/>
-              </div>
-            </button>
+              @click.prevent.native="login">
+              Login
+              <fa
+                :icon="['fa', 'angle-right']"
+                class="ml-2"/>
+            </button-rounded>
           </div>
           <div class="agreement">
             By using this Service you agree to our
@@ -96,34 +94,43 @@
 
 <script>
 import InputTransparent from '~/components/inputTransparent/inputTransparent'
+import ButtonRounded from '~/components/buttonRounded'
 import { mapMutations } from 'vuex'
+
 export default {
   name: 'Login',
-  components: { InputTransparent },
+  components: { InputTransparent, ButtonRounded },
   layout: 'minimal',
   middleware: 'auth',
 
   data() {
     return {
       email: '',
-      password: ''
+      password: '',
+      preloading: false
     }
   },
 
   methods: {
     ...mapMutations({ setToken: 'token/setToken' }),
     login() {
-      this.$api()
-        .auth.login({ email: this.email, password: this.password })
-        .then(res => {
-          if (res && res.accessToken) {
-            this.setToken(res.accessToken)
-            this.$router.push('/')
-          }
-        })
-        .catch(err => {
-          console.log('Error detected, please contact the administrator')
-        })
+      if (!this.preloading) {
+        this.preloading = true
+        this.$api.auth
+          .login({ email: this.email, password: this.password })
+          .then(res => {
+            _.delay(() => {
+              this.preloading = false
+            }, 1000)
+            if (res && res.accessToken) {
+              this.setToken(res.accessToken)
+              this.$router.push('/')
+            }
+          })
+          .catch(err => {
+            console.warn('Error detected, please contact the administrator')
+          })
+      }
     }
   }
 }

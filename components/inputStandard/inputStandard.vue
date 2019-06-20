@@ -1,40 +1,44 @@
 <template>
   <div class="form-group">
     <template v-if="label">
-      <label>{{ label }}</label>
+      <label>{{ description || label }}</label>
     </template>
     <div class="control-body">
       <input
+        :autofocus="autofocus"
         :type="type"
-        :class="{limited:limits && limits.hasOwnProperty('max'), 'is-error': error, 'is-warning': required && value.length === 0, 'with-icon': search_icon}"
+        :class="{limited:limits && limits.hasOwnProperty('max'), 'is-error': error, 'with-icon': search_icon}"
         :placeholder="placeholder"
         :readonly="disabled"
         :maxlength="limits.max ? parseInt(limits.max) : 50"
-        v-model="value"
+        v-model.trim="value"
         class="form-control"
         @blur="validation">
+      <div
+        v-if="value.length"
+        class="clear">
+        <fa
+          :icon="['fal', 'times-circle']"
+          class="clear-icon"
+          @click="clearValue"/>
+      </div>
       <template v-if="search_icon">
         <fa
           :icon="['fal', 'search']"
           class="input-icon"/>
       </template>
       <template v-if="limits && limits.hasOwnProperty('max')">
-        <span
-          :class="{disabled: disabled}"
+        <div
+          :class="{disabled: disabled, moved: value.length}"
           class="limits">
           <span class="current">{{ value != null ? value.length : 0 }}</span>
           <span class="delimiter">/</span>
           <span class="max">{{ limits.max }}</span>
-        </span>
+        </div>
       </template>
       <template v-if="error">
         <span class="message-error">
-          {{ validationMessage }}
-        </span>
-      </template>
-      <template v-else-if="required && value.length === 0">
-        <span class="message-warning">
-          {{ warningMessage }}
+          {{ required ? warningMessage : errorText }}
         </span>
       </template>
     </div>
@@ -44,12 +48,14 @@
 <script>
 export default {
   name: 'InputStandard',
-  //props 'warningMessage', 'error_message' contain text alert message,
-  // props error, warning are created for test and contain state field
   props: {
     placeholder: {
       type: String,
       default: ''
+    },
+    autofocus: {
+      type: Boolean,
+      default: false
     },
     label: {
       type: String,
@@ -59,7 +65,15 @@ export default {
       type: String,
       default: 'text'
     },
+    defaultText: {
+      type: String,
+      default: ''
+    },
     computed_value: {
+      type: String,
+      default: ''
+    },
+    description: {
       type: String,
       default: ''
     },
@@ -89,28 +103,32 @@ export default {
       type: Number,
       default: null
     },
+    certId: {
+      type: Number,
+      default: null
+    },
     disabled: {
       type: Boolean,
       default: false
     },
+    errorText: {
+      type: String,
+      default: 'Please enter a valid value'
+    },
     warningMessage: {
       type: String,
       default: 'This field is required'
-    },
-    validationMessage: {
-      type: String,
-      default: 'this field is not filled correctly'
     }
   },
   data() {
     return {
       error: false,
-      valueLength: null,
       value: '',
       pattern: {
-        email: /^(?:[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/,
+        email: /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i,
         string: /./,
-        numeric: /^\d+$/,
+        numeric: /^-?\d*(\.\d+)?$/,
+        float: /^-?(0\.\d+|[1-9]+[0-9]*\.\d+)$/,
         integer: /^\d+$/,
         ip: /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))/,
         ipv4: /^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$/,
@@ -122,67 +140,77 @@ export default {
     value: {
       deep: true,
       handler(data) {
-        if (data === null) {
+        if (_.isNull(data)) {
           data = ''
-        }
-        // this.getValidationError(data)
-        if (this.validate === 'integer') {
-          data = data.replace(/[^0-9]/g, '')
-          this.value = data
         }
         this.$emit('update', data)
       }
     },
     computed_value: {
-      deep: true,
       handler(data) {
         this.value = data
+        this.validation()
       }
     }
   },
   mounted() {
-    this.value = this.computed_value
+    if (!this.defaultText) {
+      this.value = this.computed_value
+    }
+    if (this.certId) {
+      this.value = this.computed_value
+    } else if (!this.certId && this.defaultText.length) {
+      if (this.computed_value.length) {
+        this.value = this.computed_value
+      } else {
+        this.value = this.defaultText
+      }
+    }
     this.validation()
-    // this.getValidationError(this.value)
   },
   methods: {
     validation() {
-      if (this.value !== null) {
-        if (this.value.length === 0) {
-          this.error = false
-          this.$emit('validationError', [
-            this.elementId !== null ? this.elementId : this._uid,
-            false
-          ])
-          return
-        }
+      const error = {
+        id: this.elementId !== null ? this.elementId : this._uid,
+        status: false
       }
-      if (this.validate) {
-        const result = this.pattern[this.validate].test(this.value.toString())
-        if (!result) {
-          if (this.error === false) {
-            this.error = true
-            this.$emit('validationError', [
-              this.elementId !== null ? this.elementId : this._uid,
-              true
-            ])
-          }
+      if (!_.isNull(this.value)) {
+        if (!this.value.trim() && this.required) {
+          this.errorRequired(true)
         } else {
           this.error = false
-          this.$emit('validationError', [
-            this.elementId !== null ? this.elementId : this._uid,
-            false
-          ])
+          this.$emit('validationError', error)
+        }
+        if (this.value.length && this.validate && this.pattern[this.validate]) {
+          const result = this.pattern[this.validate].test(this.value)
+          if (!result) {
+            if (this.error === false) {
+              this.error = true
+              error.status = true
+              this.$emit('validationError', error)
+            }
+          } else {
+            this.error = false
+            this.$emit('validationError', error)
+          }
         }
       }
+    },
+    errorRequired(isError) {
+      if (this.required) {
+        const error = {
+          id: this.elementId || this._uid,
+          status: isError
+        }
+        this.error = isError
+        this.$emit('validationError', error)
+      }
+    },
+    clearValue() {
+      this.value = ''
+      this.$emit('clearValue', this.value)
+      this.validation()
     }
-    // getValidationError(data) {
-    //   if (data.length === 0 && this.required) {
-    //     this.$emit('error', { add: this.fieldName })
-    //   } else {
-    //     this.$emit('error', { remove: this.fieldName })
-    //   }
-    // }
   }
 }
 </script>

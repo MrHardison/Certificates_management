@@ -10,6 +10,9 @@
         {{ label }}
       </div>
     </label>
+    <div
+      v-if="error"
+      class="error-message">This field is required</div>
   </div>
 </template>
 
@@ -21,36 +24,57 @@ export default {
       type: String,
       default: 'No label'
     },
-    defaultChecked: {
+    data: {
+      type: Boolean,
+      default: false
+    },
+    selected: {
+      type: Boolean,
+      default: false
+    },
+    required: {
       type: Boolean,
       default: false
     }
   },
   data() {
     return {
-      model: false
+      model: false,
+      error: false
     }
   },
   watch: {
     model: {
       deep: true,
       handler(data) {
+        if (data) {
+          this.errorRequired(false)
+        } else {
+          this.errorRequired(true)
+        }
         this.$emit('change', data)
-      }
-    },
-    defaultChecked: {
-      deep: true,
-      handler(data) {
-        this.model = data
       }
     }
   },
-  created() {
-    this.model = this.defaultChecked
+  mounted() {
+    this.model = this.data
+    if (this.selected) {
+      this.model = this.selected
+    }
+    if (!this.model) {
+      this.errorRequired(true)
+    }
   },
   methods: {
-    upd() {
-      this.model = this.defaultChecked
+    errorRequired(isError) {
+      if (this.required) {
+        const error = {
+          id: this.elementId || this._uid,
+          status: isError
+        }
+        this.error = isError
+        this.$emit('validationError', error)
+      }
     }
   }
 }
@@ -97,5 +121,10 @@ export default {
   transform: translateY(-50%);
   position: absolute;
   width: 10px;
+}
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 0.5rem;
 }
 </style>

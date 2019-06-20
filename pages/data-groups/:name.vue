@@ -13,7 +13,7 @@
         @interval="params.interval = $event">
         <template slot="header">
           <button-rounded
-            class="btn-green rounded"
+            class="btn-green rounded responsive"
             @click.native="$router.push({name: 'data-groups-:name-create', params: {name: dataGroup.route }})">
             {{ dataGroup.button.text }}
             <fa
@@ -160,8 +160,8 @@ export default {
       }
       this.isLoading = true
       if (this.getToken) {
-        this.$api()
-          .recordGroups.get(this.params)
+        this.$api.recordGroups
+          .get(this.params)
           .then(res => {
             this.recordGroups = this.$timezone(res)
           })
@@ -208,13 +208,11 @@ export default {
       })
       return columns
     },
-    async deleteRecordGroup(id) {
+    deleteRecordGroup(id) {
       if (id) {
-        await this.$api()
-          .recordGroups.deleteById(id)
-          .then(res => {
-            this.getRecordGroups()
-          })
+        this.$api.recordGroups.deleteById(id).then(res => {
+          this.getRecordGroups()
+        })
       }
       this.deleteModal.show = false
       this.deleteModal.id = null

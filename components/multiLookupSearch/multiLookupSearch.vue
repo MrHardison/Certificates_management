@@ -1,12 +1,14 @@
 <template>
   <div>
     <input-standard
-      :label="name"
       :disabled="true"
       :computed_value="getCertificateElement.data"
       :search_icon="true"
       class="left-icon"
-      @click.native="showLookupModal = true"/>
+      @click.native="showLookupModal = true" />
+    <div
+      v-if="error"
+      class="error-message">This field is required</div>
     <v-modal
       v-if="showLookupModal"
       header="Select lookup"
@@ -29,8 +31,9 @@
         class="d-flex w-100">
         <button-rounded
           v-show="searchText.length > 0"
+          :preloading="preloading"
           :class="{disabled: !selectedParentItem}"
-          class="btn-green rounded small"
+          class="btn-green rounded small preloading-mr0"
           @click.native="createCustomLookup">
           Create
         </button-rounded>
@@ -67,6 +70,7 @@
         slot="footer"
         class="d-flex w-100 justify-content-between">
         <button-rounded
+          :preloading="deletePreloading"
           class="btn-green rounded small mx-auto"
           @click.native="confirmDelete">
           Yes
@@ -132,6 +136,10 @@ export default {
       default() {
         return []
       }
+    },
+    required: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -162,7 +170,10 @@ export default {
         record_lookup_id: null,
         record_lookup_type: 'system',
         data: ''
-      }
+      },
+      preloading: false,
+      deletePreloading: false,
+      error: false
     }
   },
   computed: {
@@ -211,6 +222,13 @@ export default {
       }
     }
   },
+  mounted() {
+    if (!this.getCertificateElement.data.length) {
+      this.errorRequired(true)
+    } else {
+      this.errorRequired(false)
+    }
+  },
   methods: {
     ...mapMutations({
       setOldSelectedOptions: 'dataView/setOldLookupSelectedOptions',
@@ -219,8 +237,8 @@ export default {
     getDataListDefaults() {
       this.isLoading = true
       this.recordLookups = []
-      this.$api()
-        .dataListDefaults.getDataListDefaults()
+      this.$api.dataListDefaults
+        .getDataListDefaults()
         .then(res => {
           this.dataListDefaults = res
         })
@@ -247,10 +265,15 @@ export default {
         this.dataListDefaultName = parentFormElement.name
         if (parentCertificateElement.data) {
           this.childRecordLookupIds = [
-            ...parentCertificateElement.record_lookups_custom,
-            ...parentCertificateElement.record_lookups_system
+            ..._.map(parentCertificateElement.record_lookups_custom, item => {
+              item.record_type = 'custom'
+              return item
+            }),
+            ..._.map(parentCertificateElement.record_lookups_system, item => {
+              item.record_type = 'system'
+              return item
+            })
           ]
-          this.params.record_lookup_type = 'system'
           this.getRecordLookups()
         } else {
           this.needToSelectParentModal = true
@@ -265,9 +288,12 @@ export default {
           this.params.record_lookup_id = this.childRecordLookupIds[
             this.selectedChildRecordLookupid
           ].id
+          this.params.record_lookup_type = this.childRecordLookupIds[
+            this.selectedChildRecordLookupid
+          ].record_type
         }
-        this.$api()
-          .recordLookups.getRecordLookups(this.params)
+        this.$api.recordLookups
+          .getRecordLookups(this.params)
           .then(res => {
             res.data.forEach(item => {
               this.recordLookups.push(item)
@@ -292,8 +318,8 @@ export default {
             this.isLoading = false
           })
       } else {
-        this.$api()
-          .recordLookups.getRecordLookups(this.params)
+        this.$api.recordLookups
+          .getRecordLookups(this.params)
           .then(res => {
             res.data.forEach(item => {
               this.recordLookups.push(item)
@@ -317,6 +343,7 @@ export default {
       })
     },
     setData() {
+      this.errorRequired(false)
       this.closeLookupModal()
       const data = {
         elementId: this.elementId,
@@ -347,35 +374,41 @@ export default {
       this.selectedParentItem = null
     },
     createCustomLookup() {
-      if (this.selectedParentItem) {
-        this.createLookupParams.record_lookup_id = null
-        this.createLookupParams.data = this.searchText
-        if (this.selectedParentItem !== true) {
-          this.createLookupParams.record_lookup_id = this.selectedParentItem
-          const parentSystemLookup = _.find(
-            this.getCertificateParentElement.record_lookups_system,
-            {
-              id: this.selectedParentItem
+      if (!this.preloading) {
+        this.preloading = true
+        if (this.selectedParentItem) {
+          this.createLookupParams.record_lookup_id = null
+          this.createLookupParams.data = this.searchText
+          if (this.selectedParentItem !== true) {
+            this.createLookupParams.record_lookup_id = this.selectedParentItem
+            const parentSystemLookup = _.find(
+              this.getCertificateParentElement.record_lookups_system,
+              {
+                id: this.selectedParentItem
+              }
+            )
+            const parentCustomLookup = _.find(
+              this.getCertificateParentElement.record_lookups_custom,
+              {
+                id: this.selectedParentItem
+              }
+            )
+            if (parentSystemLookup) {
+              this.createLookupParams.record_lookup_type = 'system'
+            } else if (parentCustomLookup) {
+              this.createLookupParams.record_lookup_type = 'custom'
             }
-          )
-          const parentCustomLookup = _.find(
-            this.getCertificateParentElement.record_lookups_custom,
-            {
-              id: this.selectedParentItem
-            }
-          )
-          if (parentSystemLookup) {
-            this.createLookupParams.record_lookup_type = 'system'
-          } else if (parentCustomLookup) {
-            this.createLookupParams.record_lookup_type = 'custom'
           }
+          this.$api.recordLookups
+            .createRecordLookups(this.createLookupParams)
+            .then(res => {
+              _.delay(() => {
+                this.preloading = false
+              }, 1000)
+              this.recordLookups = []
+              this.getRecordLookups()
+            })
         }
-        this.$api()
-          .recordLookups.createRecordLookups(this.createLookupParams)
-          .then(res => {
-            this.recordLookups = []
-            this.getRecordLookups()
-          })
       }
     },
     deleteCustomLookup(item) {
@@ -383,13 +416,19 @@ export default {
       this.deleteLookupModal = true
     },
     confirmDelete() {
-      this.$api()
-        .recordLookups.deleteRecordLookups(this.itemToDelete.id)
-        .then(res => {
-          this.deleteLookupModal = false
-          this.recordLookups = []
-          this.getRecordLookups()
-        })
+      if (!this.deletePreloading) {
+        this.deletePreloading = true
+        this.$api.recordLookups
+          .deleteRecordLookups(this.itemToDelete.id)
+          .then(res => {
+            _.delay(() => {
+              this.deletePreloading = false
+            }, 1000)
+            this.deleteLookupModal = false
+            this.recordLookups = []
+            this.getRecordLookups()
+          })
+      }
     },
     getOldSelectedItems() {
       const selectedFormElement = _.find(this.formSectionElements, {
@@ -399,10 +438,25 @@ export default {
         form_section_element_id: selectedFormElement.id
       })
       this.setOldSelectedOptions(selectedCertificateElement)
+    },
+    errorRequired(isError) {
+      if (this.required) {
+        const error = {
+          id: this.elementId || this._uid,
+          status: isError
+        }
+        this.error = isError
+        this.$emit('validationError', error)
+      }
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 0.5rem;
+}
 </style>

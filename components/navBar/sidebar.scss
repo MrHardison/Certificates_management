@@ -1,71 +1,85 @@
 .sidebar {
-  z-index: 2;
-  float: left;
-  width: 290px;
-  min-width: 290px;
   background: $main_dark;
+  float: left;
+  min-height: 100vh;
   position: fixed;
   top: 0;
-  min-height: 100vh;
-  transition: all 0.3s linear;
+  transition: width 300ms ease-in-out;
+  will-change: width;
+  width: 290px;
+  z-index: 2;
+
   &.closed {
     width: 75px;
-    min-width: 75px;
+
     .block {
       .logo {
         padding: 25px 0 25px 18px !important;
       }
     }
+
     .nav {
       .nav-item {
         padding: 10px 25px !important;
       }
     }
   }
+
   .block {
     .logo {
-      transition: padding 0.3s linear;
-      padding: 25px 0 25px 37px;
-      display: block;
       cursor: pointer;
+      display: block;
+      padding: 25px 0 25px 18px;
+      transition: padding 0.3s linear;
+      user-select: none;
+
       &:hover {
         text-decoration: none;
       }
+
       .image {
         display: inline-block;
+
         img {
           height: 30px;
         }
       }
+
       .text {
-        margin-left: 13px;
         color: $white;
-        line-height: 30px;
-        vertical-align: middle;
-        text-overflow: clip;
         display: inline-block;
+        line-height: 30px;
+        margin-left: 13px;
         position: absolute;
+        text-overflow: clip;
+        vertical-align: middle;
         width: auto;
+
         img {
           height: 30px;
         }
       }
     }
+
     .nav {
       display: block;
+
       &.service_nav {
         display: none;
       }
+
       .nav-item {
         align-items: center;
         display: flex;
-        padding: 10px 45px;
-        transition: all 0.3s linear;
+        padding: 10px 25px;
+        transition: all 0.3s ease-in-out;
         color: $gray;
         cursor: pointer;
+
         &:hover {
           text-decoration: none;
         }
+
         &.active {
           background: linear-gradient(
               to right,
@@ -73,15 +87,18 @@
               $secondary_blue 100%
           ) !important;
           color: $white !important;
+
           .icon,
           span {
             color: $white !important;
             font-weight: 500;
           }
         }
+
         &:hover {
           background: rgba(74, 145, 192, 0.5);
         }
+
         .icon {
           width: 25px;
           color: $gray;
@@ -90,83 +107,151 @@
           vertical-align: middle;
           display: inline-block;
         }
+
         span {
-          padding-top: 1px;
-          font-size: 1rem;
           color: $gray;
-          font-weight: 400;
-          transition: all 0.3s ease-in-out;
-          margin-left: 20px;
           display: inline-block;
+          font-size: 1rem;
+          font-weight: 400;
+          margin-left: 20px;
           max-width: 185px;
-          width: auto;
-          white-space: nowrap;
           overflow: hidden;
+          padding-top: 1px;
           text-overflow: clip;
           text-decoration: none;
+          transition: all 0.3s ease-in-out;
+          user-select: none;
+          width: auto;
+          white-space: nowrap;
+
+          @media (max-width: 768px) {
+            text-overflow: ellipsis;
+          }
         }
       }
     }
   }
+  &--switch {
+    align-items: center;
+    bottom: 0;
+    font-size: 30px;
+    cursor: pointer;
+    color: #818e9e;
+    display: flex;
+    margin-bottom: 15px;
+    padding: 10px 0 10px 22px;
+    position: absolute;
+    transition: background 0.3s ease-in-out;
+    justify-content: flex-start;
+    width: 100%;
+
+    svg {
+      transition: transform 0.3s ease-in-out, color 0.3s ease-in-out;
+    }
+
+    &:hover {
+      color: #fff;
+    }
+
+    .text {
+      margin: 0 0 0 20px;
+      font-size: 16px;
+      user-select: none;
+      transition: color 0.3s ease-in-out;
+    }
+
+    &.active {
+      svg {
+        transform: rotate(-180deg)
+      }
+    }
+
+    @media (max-width: 768px) {
+      bottom: auto;
+      padding-left: 0;
+      right: -70px;
+      top: 15px;
+      width: auto;
+
+      svg {
+        &:hover {
+          color: #fff;
+        }
+      }
+      .text {
+        display: none;
+      }
+    }
+
+    @media (max-width: 543px) {
+      right: -35px;
+    }
+  }
+
+  .collapse-text-enter-active, .collapse-text-leave-active {
+    transition: opacity 0.3s ease-in-out;
+  }
+  .collapse-text-enter, .collapse-text-leave-to {
+    opacity: 0;
+  }
 }
 
-@include mq($max-width: 768px) {
+@media (max-width: 768px) {
   .sidebar {
     height: 100%;
     position: absolute;
     left: 0;
-    top: 0;
     float: none;
-    .block {
-      .logo {
-        transition: padding 0.3s linear;
-        .text {
-          transition: all 0.3s linear;
-        }
-      }
-    }
+    top: 0;
+    transition: transform 0.3s ease-in-out;
+
     &.closed {
-      position: absolute;
-      left: -75px;
-      .block {
-        .logo {
-          transition: padding .3s linear;
-          .text {
-            display: none;
-          }
-        }
-      }
+      transform: translateX(-100%);
+      width: 290px;
     }
+
     .block {
       position: relative;
       height: 100%;
+
       .nav {
-        margin-top: 0px;
+        margin-top: 0;
+        position: sticky;
+        top: 20px;
+
         &:not(.service_nav) {
-          height: calc(100% - 210px);
+          height: auto;
           overflow-y: auto;
-          overflow-x: hidden; 
+          overflow-x: hidden;
         }
+
         .nav-item {
           transition: all .3s;
+
           &.closed {
             margin-left: -300px;
           }
         }
+
         &.service_nav {
           display: block;
           position: absolute;
-          bottom: 25px;
+          top: auto;
+          bottom: 25px !important;
           width: 100%;
+
           .nav-item {
             display: flex;
-            transition: all .3s;
+            transition: all .3s ease-in-out;
+
             svg {
               margin-right: 20px;
             }
+
             &.closed {
               margin-left: -300px;
             }
+
             a, span {
               color: #818e9e;
               font-size: 16px;
@@ -174,6 +259,7 @@
               position: relative;
               white-space: nowrap;
             }
+
             span {
               font-size: 16px;
             }
@@ -181,5 +267,10 @@
         }
       }
     }
+  }
+}
+@media (max-width: 543px) {
+  .sidebar {
+    width: 280px
   }
 }

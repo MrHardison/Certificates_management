@@ -7,17 +7,6 @@
         <div class="logo">
           <img src="/wwt-black.png">
         </div>
-        <div class="header__wrap">
-          <div
-            :class="{active: !isClosed}"
-            class="hamburger"
-            @click="toggleMenu">
-            <div class="hamburger-box">
-              <div class="hamburger-inner"/>
-            </div>
-          </div>
-          <slot/>
-        </div>
         <div class="buttons">
           <button
             class="btn"
@@ -38,6 +27,7 @@
       </div>
     </div>
     <div
+      ref="sidebar"
       :class="{closed: isClosed}"
       class="sidebar">
       <div class="block">
@@ -80,7 +70,8 @@
         <ul class="service_nav nav">
           <li
             :class="{closed: isClosed}"
-            class="nav-item">
+            class="nav-item"
+            @click="logout">
             <fa
               :icon="['far', 'power-off']"
               class="icon"/>
@@ -97,6 +88,21 @@
               href="https://weworktogethersoftware.com/contact-us">HELP AND SUPPORT</a>
           </li>
         </ul>
+        <div
+          :class="{active: !isClosed}"
+          class="sidebar--switch"
+          @click="toggleMenu">
+          <fa
+            :icon="['fal', 'arrow-circle-right']"
+            class="icon"/>
+          <transition name="collapse-text">
+            <p
+              v-show="!isClosed"
+              class="text">
+              Collapse
+            </p>
+          </transition>
+        </div>
       </div>
     </div>
   </div>
@@ -115,15 +121,17 @@ export default {
       toggleMenu: 'menu/toggleMenu',
       setToken: 'token/setToken'
     }),
-
     logout() {
       this.setToken(false)
-      this.$api()
-        .auth.logout()
-        .then(res => {
+      if (!this.preloading) {
+        this.preloading = true
+        this.$api.auth.logout().then(res => {
+          _.delay(() => {
+            this.preloading = false
+          }, 1000)
           this.$router.push('/auth/login')
         })
-        .catch(err => {})
+      }
     },
     sidebarItem() {
       if (window.innerWidth <= 768) {
@@ -131,19 +139,23 @@ export default {
       }
     },
     hover(key) {
-      const parentNode = this.$refs[`menu-item-${key}`][0].$el
-      const parentNodeWidth = parentNode.clientWidth - 90
-      const text = parentNode.children[1]
-      if (text.clientWidth > 150) {
-        text.style.textIndent = '-25%'
+      if (window.innerWidth >= 768) {
+        const parentNode = this.$refs[`menu-item-${key}`][0].$el
+        const parentNodeWidth = parentNode.clientWidth - 90
+        const text = parentNode.children[1]
+        if (text.clientWidth > 150) {
+          text.style.textIndent = '-25%'
+        }
       }
     },
     leave(key) {
-      const parentNode = this.$refs[`menu-item-${key}`][0].$el
-      const parentNodeWidth = parentNode.clientWidth - 90
-      const text = parentNode.children[1]
-      if (text.clientWidth > 150) {
-        text.style.textIndent = 0
+      if (window.innerWidth >= 768) {
+        const parentNode = this.$refs[`menu-item-${key}`][0].$el
+        const parentNodeWidth = parentNode.clientWidth - 90
+        const text = parentNode.children[1]
+        if (text.clientWidth > 150) {
+          text.style.textIndent = 0
+        }
       }
     }
   }

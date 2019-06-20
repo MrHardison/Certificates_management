@@ -2,6 +2,14 @@
   <div class="row">
     <div class="col-12">
       <div class="card">
+        <div class="row">
+          <div class="col-12 col-sm-12 col-md-12 col-xl-12 col-xl-12">
+            <breadcrumbs
+              v-if="breadcrumbs.length"
+              :data="breadcrumbs"
+              :record-group="recordGroup"/>
+          </div>
+        </div>
         <div class="card-body">
           <div class="row">
             <template v-if="dataGroup">
@@ -33,18 +41,28 @@
             <spiner-loader/>
           </div>
         </div>
-        <div class="card-footer d-flex justify-content-end">
-          <button-rounded
-            class="btn-smoke rounded small mr-2"
-            @click.native="showModal = true">
-            Delete
-          </button-rounded>
-          <button-rounded
-            :class="{disabled: validationErrors.length > 0}"
-            class="btn-green rounded small mr-2"
-            @click.native="updateRecord">
-            Save
-          </button-rounded>
+        <div
+          class="card-footer d-flex justify-content-end">
+          <div class="btn-wrapper">
+            <button-rounded
+              class="btn-smoke rounded small mr-2 responsive preloading-mr0"
+              @click.native="showModal = true">
+              <fa
+                :icon="['fal', 'trash-alt']"
+                class="mr-2" />
+              Delete
+            </button-rounded>
+            <button-rounded
+              :preloading="preloading"
+              :class="{disabled: validationErrors.length > 0}"
+              class="btn-green rounded small mr-2 responsive preloading-mr0"
+              @click.native="updateRecord">
+              <fa
+                :icon="['fas', 'check']"
+                class="mr-2" />
+              Save
+            </button-rounded>
+          </div>
         </div>
         <v-modal
           v-if="showModal"
@@ -60,7 +78,8 @@
               Cancel
             </button-rounded>
             <button-rounded
-              class="btn-green rounded small mr-2"
+              :preloading="deletePreloading"
+              class="btn-green rounded small mr-2 preloading-mr0"
               @click.native="deleteRecord">
               Delete
             </button-rounded>
@@ -83,6 +102,7 @@ import VModal from '~/components/vModal/vModal'
 import VTable from '~/components/table/vTable'
 import SpinerLoader from '~/components/spinerLoader'
 import VRecordGroupTabs from '~/blocks/vRecordGroupTabs/vRecordGroupTabs'
+import Breadcrumbs from '~/components/breadcrumbs'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -93,7 +113,9 @@ export default {
     VModal,
     ButtonRounded,
     InputStandard,
-    SpinerLoader
+    SpinerLoader,
+    Breadcrumbs,
+    preloading: false
   },
   props: {
     dataListGroupId: {
@@ -109,18 +131,46 @@ export default {
   },
   data() {
     return {
+      breadcrumbs: [],
       dataGroup: {},
+      dataListGroups: [],
       validationErrors: [],
       recordGroup: {},
+      recordGroups: [],
       showModal: false,
-      isLoading: false
+      isLoading: false,
+      params: {
+        data_list_group_id: this.dataListGroupId,
+        page: 1,
+        interval: 100,
+        search_text: ''
+      },
+      preloading: false,
+      deletePreloading: false
     }
   },
   computed: {
-    ...mapGetters({ getToken: 'token/getApiToken' })
+    ...mapGetters({ getToken: 'token/getApiToken' }),
+    childDataListElement() {
+      return _.find(this.recordGroups, {
+        ['child.data_list_group_id']: this.dataListGroupId
+      })
+    },
+    getDataListElementById() {
+      const item = _.find(this.dataListGroups, {
+        id: this.dataListGroupId
+      })
+      if (item) {
+        return item.data_list_group_id
+      } else {
+        return 0
+      }
+    }
   },
   mounted() {
     this.getDataGroup()
+    this.getRecordGroups()
+    this.getDataListGroups()
   },
   methods: {
     getDataGroup() {
@@ -128,21 +178,20 @@ export default {
         return
       } else if (this.$route.params.id) {
         this.isLoading = true
-        this.$api()
-          .recordGroups.getById(this.$route.params.id)
-          .then(res => {
-            if (_.isPlainObject(res.data)) {
-              this.recordGroup = res.data
-            }
-            if (res.data_list_group_id !== this.dataListGroupId) {
-              this.$router.push({
-                name: 'error'
-              })
-            }
-          })
+        this.$api.recordGroups.getById(this.$route.params.id).then(res => {
+          this.breadcrumbs = res.breadcrumbs
+          if (_.isPlainObject(res.data)) {
+            this.recordGroup = res.data
+          }
+          if (res.data_list_group_id !== this.dataListGroupId) {
+            this.$router.push({
+              name: 'error'
+            })
+          }
+        })
         if (this.getToken) {
-          this.$api()
-            .dataGroups.getById(this.dataListGroupId)
+          this.$api.dataGroups
+            .getById(this.dataListGroupId)
             .then(res => {
               this.dataGroup = res
             })
@@ -154,20 +203,51 @@ export default {
     },
     updateRecord() {
       if (this.validationErrors.length === 0) {
-        this.$api().recordGroups.updateById(this.$route.params.id, {
-          data: this.recordGroup
-        })
+        if (!this.preloading) {
+          this.preloading = true
+          this.$api.recordGroups
+            .updateById(this.$route.params.id, {
+              data: this.recordGroup
+            })
+            .then(res => {
+              _.delay(() => {
+                this.preloading = false
+              }, 1000)
+            })
+        }
       }
     },
     deleteRecord() {
-      this.$api()
-        .recordGroups.deleteById(this.$route.params.id)
-        .then(() => {
+      if (!this.deletePreloading) {
+        this.deletePreloading = true
+        this.$api.recordGroups.deleteById(this.$route.params.id).then(() => {
+          _.delay(() => {
+            this.deletePreloading = false
+          }, 1000)
           this.$router.push({
             name: 'data-groups-:name',
             params: { name: this.$route.params.name }
           })
         })
+      }
+    },
+    getRecordGroups() {
+      this.$api.recordGroups.get(this.params).then(res => {
+        _.forEach(res.data, item => {
+          this.recordGroups.push(item)
+        })
+        if (res.next_page_url) {
+          ++this.params.page
+          this.getRecordGroups()
+        } else {
+          this.params.page = 1
+        }
+      })
+    },
+    getDataListGroups() {
+      this.$api.dataGroups.dataListGroups().then(res => {
+        this.dataListGroups = res
+      })
     },
     checkValidationErrors(error) {
       if (error[1] === false) {

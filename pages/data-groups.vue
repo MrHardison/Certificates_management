@@ -3,12 +3,12 @@
     <div class="row">
       <div
         v-if="dataGroups"
-        class="col">
+        class="col responsive">
         <template v-for="(dataGroup, index) in dataGroups">
           <button-rounded
             :key="index"
             :class="{active: $route.params.name === dataGroup.route}"
-            class="btn-white rounded small mr-2"
+            class="btn btn-white rounded small mr-2 responsive"
             @click.native="$router.push({name: 'data-groups-:name', params: {name: dataGroup.route}})">
             {{ dataGroup.title }}
             <fa
@@ -87,4 +87,16 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.responsive {
+  @media (max-width: 544px) {
+    .btn {
+      margin: 0 0 1rem 0 !important;
+      width: 100%;
+
+      &:last-child {
+        margin-bottom: 0 !important;
+      }
+    }
+  }
+}
 </style>

@@ -4,23 +4,29 @@
       :sections="formSections"
       :section-elements="certificateSections"
       :opened-section-id="selectedSectionId"
-      @openSection="selectedSectionId = $event"/>
+      @openSection="selectedSectionId = $event" />
     <template v-if="activeFormSection">
       <data-view-content
         :key="activeFormSection.id"
         :form-section="activeFormSection"
-        :record-groups="selectedRecordGroups"
         :certificate-section="activeCertificateSection"
+        :record-groups="selectedRecordGroups"
+        :all-sections="formSections"
+        :all-cert-sections="certificateSections"
+        :selected-section-id="selectedSectionId"
         @validationError="$emit('validationError', $event)"
         @chooseParent="chooseParent($event)"
         @setLookupData="$emit('updateCertificateSectionData', $event)"
         @updateChildData="$emit('updateChildData', $event)"
         @copyData="$emit('copyData', $event)"
-        @resetRecordGroup="resetRecordGroupChild($event)"/>
+        @resetRecordGroup="resetRecordGroupChild($event)"
+        @checkParentSection="getSectionParent"
+        @selectedSectionId="selectedSectionId = $event" />
     </template>
     <v-modal
       v-if="needToSelectParentModal"
-      header="Warning">
+      header="Warning"
+      @close="needToSelectParentModal = false">
       <template slot="body">
         Need to choose "{{ parentFormSection.name }}"
       </template>
@@ -29,19 +35,18 @@
         class="d-flex w-100">
         <button-rounded
           class="btn-green rounded small mx-auto"
-          @click.native="goToChooseParent">
-          OK
+          @click.native="goToChooseParent">OK
         </button-rounded>
       </div>
     </v-modal>
   </div>
 </template>
 <script>
+import { mapGetters, mapMutations } from 'vuex'
 import dataViewSections from './dataViewSections'
 import dataViewContent from './dataViewContent'
 import ButtonRounded from '~/components/buttonRounded/buttonRounded'
 import VModal from '~/components/vModal/vModal'
-import { mapGetters, mapMutations } from 'vuex'
 
 export default {
   name: 'DataViewContainer',
@@ -99,24 +104,18 @@ export default {
       handler(data) {
         this.getSectionsStatus()
         const userFormSection = this.findUserFormSections()
-        if (userFormSection !== undefined) {
+        if (userFormSection) {
           userFormSection.elements.forEach(element => {
-            this.fillCompanyData(
-              element.rules.holder.who,
-              element.rules.holder.field.length === 1
-                ? element.rules.holder.field[0]
-                : element.rules.holder.field[1],
-              element.id
-            )
+            if (element.rules.holder) {
+              this.fillCompanyData(
+                element.rules.holder.who,
+                this.getHolderValue(element.rules.holder.field),
+                element.id
+              )
+            }
           })
-          this.$emit('setSections', data)
         }
-      }
-    },
-    selectedSectionId: {
-      deep: true,
-      handler(data) {
-        data > 0 && this.getSectionParent()
+        this.$emit('setSections', data)
       }
     }
   },
@@ -135,11 +134,11 @@ export default {
   },
   methods: {
     ...mapMutations({ setSectionsStatus: 'dataView/setSectionsStatus' }),
-    async getCompany() {
-      this.company = await this.$api().company.get()
+    getCompany() {
+      this.$api.company.get().then(res => (this.company = res))
     },
-    async getUser() {
-      this.user = await this.$api().user.get()
+    getUser() {
+      this.$api.user.get().then(res => (this.user = res))
     },
     getSectionsStatus() {
       let sectionsStatus = []
@@ -191,11 +190,9 @@ export default {
                   : null,
                 element.id
               )
-          const dublicate = _.find(certificateSection.elements, {
-            form_section_element_id: certificateElement.form_section_element_id
-          })
-          !dublicate ? certificateSection.elements.push(certificateElement) : ''
+          certificateSection.elements.push(certificateElement)
         })
+        certificateSection.elements = _.uniq(certificateSection.elements)
         this.certificateSections.push(certificateSection)
       })
       this.$emit('setNewCertificateSections', this.certificateSections)
@@ -227,7 +224,7 @@ export default {
       if (section) {
         this.selectedSectionId = section.id
       } else {
-        console.log('Error in section find function. DataViewContainer:126')
+        console.warn('Error in section find function. DataViewContainer:126')
       }
     },
     findUserFormSections() {
@@ -269,35 +266,38 @@ export default {
       }
     },
     resetRecordGroupChild(data_list_group_id) {
+      let fElementsArray = []
       const dataListElement = _.find(this.getdataListGroups, {
         data_list_group_id
       })
       if (dataListElement) {
-        const fElements = _.find(this.formSections, {
-          elements: [
-            {
-              data_list_group_id: dataListElement.id
-            }
-          ]
+        _.forEach(this.formSections, section => {
+          _.forEach(section.elements, element => {
+            element.data_list_group_id === dataListElement.id &&
+              fElementsArray.push(section)
+          })
         })
-        fElements.elements.forEach(fElement => {
-          const cElements = _.find(this.certificateSections, {
-            elements: [
-              {
-                form_section_element_id: fElement.id
-              }
-            ]
+        fElementsArray = _.uniq(fElementsArray)
+        _.forEach(fElementsArray, fElements => {
+          fElements.elements.forEach(fElement => {
+            const cElements = _.find(this.certificateSections, {
+              elements: [
+                {
+                  form_section_element_id: fElement.id
+                }
+              ]
+            })
+            const cElement = _.find(cElements.elements, {
+              form_section_element_id: fElement.id
+            })
+            cElement.data = ''
+            cElement.record_group_id = null
           })
-          const cElement = _.find(cElements.elements, {
-            form_section_element_id: fElement.id
-          })
-          cElement.data = ''
-          cElement.record_group_id = null
         })
         const childElement = _.find(this.getdataListGroups, {
           data_list_group_id: dataListElement.id
         })
-        if (childElement !== undefined) {
+        if (childElement) {
           this.resetRecordGroupChild(childElement.data_list_group_id)
         }
       }
@@ -311,7 +311,7 @@ export default {
         id: this.selectedSectionId
       })
       _.forEach(selectedFormSection.elements, element => {
-        if (element.data_list_group_id > 0) {
+        if (element.data_list_group_id) {
           selectedDataListGroup = element.data_list_group_id
         }
       })
@@ -344,10 +344,10 @@ export default {
               if (item.record_group_id !== null) {
                 ++count
               }
-              if (count === 0) {
-                this.needToSelectParentModal = true
-              }
             })
+            if (count === 0) {
+              this.needToSelectParentModal = true
+            }
           }
         }
       }
@@ -357,6 +357,15 @@ export default {
       _.delay(() => {
         this.selectedSectionId = this.parentFormSection.id
       }, 300)
+    },
+    getHolderValue(value) {
+      let selectedValue = ''
+      _.forEach(value, item => {
+        if (item !== 'properties') {
+          selectedValue = item
+        }
+      })
+      return selectedValue
     }
   }
 }

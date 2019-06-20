@@ -51,7 +51,7 @@
                 create: checkedDataGroups[group.id].create,
                 delete: checkedDataGroups[group.id].delete
               }"
-              @updateItem="setCheckboxValue(group.id, $event)"/>
+              @updateItem="checkedDataGroups[group.id] = $event"/>
           </div>
         </template>
       </div>
@@ -123,8 +123,11 @@ export default {
   computed: {
     checkedDataGroups() {
       let res = {}
-      if (Object.keys(this.tree).length) {
-        this.tree.data_groups.forEach(item => {
+      if (_.keys(this.tree).length) {
+        const dataGroups = this.tree.hasOwnProperty('data_groups')
+          ? this.tree.data_groups
+          : []
+        _.forEach(dataGroups, item => {
           const checked = this.getDefaultGroups(item.id)
           if (checked) {
             res[item.id] = checked
@@ -186,9 +189,6 @@ export default {
         return response
       }
       return null
-    },
-    setCheckboxValue(id, item) {
-      this.checkedDataGroups[id] = item
     }
   }
 }

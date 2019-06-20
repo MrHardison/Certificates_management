@@ -2,7 +2,7 @@
   <div
     class="item-selector">
     <label class="label">
-      Search in lookups
+      Type below to search or create to a new record
     </label>
     <div class="input">
       <fa
@@ -99,16 +99,6 @@ export default {
         }),
         'data'
       )
-    }
-  },
-  watch: {
-    defaultSelected: {
-      deep: true,
-      handler(data) {
-        this.selectedItemId = data.id
-        this.selectedItemType = data.record_lookup_type
-        this.$emit('update', data)
-      }
     }
   },
   mounted() {

@@ -9,11 +9,7 @@
         </div>
       </div>
     </div>
-    <nav-bar>
-      <breadcrumb
-        :route="$route"
-        class="d-none d-sm-inline-flex"/>
-    </nav-bar>
+    <nav-bar />
     <div
       :class="{closed: isClosed}"
       class="page-content">
@@ -27,14 +23,14 @@
 <script>
 import { mapGetters, mapMutations } from 'vuex'
 import { navBar } from '@/components/navBar/'
-import Breadcrumb from '~/components/breadcrumbs/Breadcrumbs'
 
 export default {
-  components: { navBar, Breadcrumb },
+  components: { navBar },
   data() {
     return {
       isClose: false,
-      showPreloader: false
+      showPreloader: false,
+      user: {}
     }
   },
   computed: {
@@ -43,35 +39,49 @@ export default {
   mounted() {
     this.showPreloader = true
     if (this.$store.getters['token/getApiToken']) {
-      const user = this.$api().user.get()
-      const ui = this.$api()
-        .menu.ui()
+      const user = this.$api.user.get().then(res => {
+        this.user = res
+      })
+      const ui = this.$api.menu
+        .ui()
         .then(res => {
-          let menuArray = res.filter(item => {
-            if (
-              (item.properties.module === 'certificates' && !item.deleted_at) ||
-              (item.properties.module === 'settings' && !item.deleted_at) ||
-              (item.properties.module === 'data_groups' && !item.deleted_at) ||
-              (item.properties.module === 'roles_and_permissions' &&
-                !item.deleted_at)
-            ) {
-              return item
-            }
+          const menuArray = _.filter(res, item => {
+            return item.properties.route
+            // if (
+            //   (item.properties.module === 'certificates' && !item.deleted_at) ||
+            //   (item.properties.module === 'settings' && !item.deleted_at) ||
+            //   (item.properties.module === 'data_groups' && !item.deleted_at) ||
+            //   (item.properties.module === 'roles_and_permissions' &&
+            //     !item.deleted_at)
+            //   return item
+            // }
           })
           this.reload(this.$order(menuArray))
         })
         .catch(err => {
-          console.log('Error detected, please contact the administrator')
+          console.warn('Error detected, please contact the administrator')
         })
       Promise.all([ui, user]).finally(() => {
         this.showPreloader = false
+        this.$sentry.configureScope(scope => {
+          scope.setUser({
+            username: this.user.properties.user_full_name || 'username',
+            email: this.user.email,
+            id: this.user.id,
+            company_id: this.user.company.id
+          })
+        })
       })
     }
   },
   methods: {
     ...mapMutations({
       toggleMenu: 'menu/toggleMenu',
-      reload: 'menu/reload'
+      reload: 'menu/reload',
+      setUserName: 'user/setUserName',
+      setEmail: 'user/setEmail',
+      setUserId: 'user/setUserId',
+      setCompanyId: 'user/setCompanyId'
     })
   }
 }
@@ -149,7 +159,7 @@ export default {
     margin-left: 75px;
   }
 }
-@include mq($max-width: 768px) {
+@media (max-width: 768px) {
   .page-content {
     margin-left: 0;
     &.closed {

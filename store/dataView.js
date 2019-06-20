@@ -16,7 +16,7 @@ export const mutations = {
     state.sectionsStatus = data
   },
   setOldLookupSelectedOptions(state, data) {
-    _.assign(state.oldLookupSelectedOptions, data)
+    state.oldLookupSelectedOptions = _.cloneDeep(data)
   },
   clearOldLookupSelectedOptions(state) {
     state.oldLookupSelectedOptions = {}

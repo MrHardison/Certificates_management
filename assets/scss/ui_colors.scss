@@ -37,3 +37,11 @@ ul {
 .form-check {
   padding: 0 !important;
 }
+
+img {
+  user-select: none;
+}
+
+body {
+  position: relative;
+}

@@ -15,7 +15,7 @@
               src="/auth-image.png"
               alt="Image">
           </div>
-          <div class="form">
+          <form class="form">
             <h1 class="welcome">Forgot Password</h1>
             <p class="register">
               Don't have an account?
@@ -35,16 +35,15 @@
               @update="email = $event"/>
 
             <div class="form-group">
-              <button
+              <button-rounded
+                :preloading="preloading"
                 class="btn btn-md btn-green rounded bold"
-                @click="reset">
-                <div class="content">
-                  Reset password
-                  <fa
-                    :icon="['fa', 'unlock']"
-                    class="icon"/>
-                </div>
-              </button>
+                @click.prevent.native="reset">
+                Reset password
+                <fa
+                  :icon="['fa', 'unlock']"
+                  class="ml-4"/>
+              </button-rounded>
             </div>
             <div class="agreement">
               By using this Service you agree to our
@@ -68,7 +67,7 @@
                 target="_blank"
                 href="https://weworktogethersoftware.com/contact-us">Help &amp; Support</a>
             </div>
-          </div>
+          </form>
         </div>
         <div class="footer-info">
           <div class="vat">
@@ -96,16 +95,19 @@
 
 <script>
 import InputTransparent from '~/components/inputTransparent/inputTransparent'
+import ButtonRounded from '~/components/buttonRounded'
+
 export default {
   name: 'Forgot',
-  components: { InputTransparent },
+  components: { InputTransparent, ButtonRounded },
   layout: 'minimal',
   middleware: 'auth',
 
   data() {
     return {
       tokenExist: false,
-      email: ''
+      email: '',
+      preloading: false
     }
   },
   mounted() {
@@ -113,7 +115,14 @@ export default {
   },
   methods: {
     reset() {
-      this.$api().auth.reset({ email: this.email })
+      if (!this.preloading) {
+        this.preloading = true
+        this.$api.auth.reset({ email: this.email }).then(res => {
+          _.delay(() => {
+            this.preloading = false
+          }, 1000)
+        })
+      }
     }
   }
 }

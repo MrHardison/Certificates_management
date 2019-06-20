@@ -12,7 +12,7 @@
             src="/auth-image.png"
             alt="Image">
         </div>
-        <div class="form">
+        <form class="form">
           <h1 class="welcome">Restore Password</h1>
           <p class="register">
             Don't have an account?
@@ -35,29 +35,27 @@
             :label="'New password'"
             :type="'password'"
             :placeholder="'*******'"
-            @update="new_password = $event"/>
+            @update="newPassword = $event"/>
 
           <input-transparent
             :label="'New password confirmation'"
             :type="'password'"
             :placeholder="'*******'"
-            @update="password_confirmation = $event"/>
+            @update="passwordConfirmation = $event"/>
 
           <div class="form-group">
-            <button
+            <button-rounded
               class="btn btn-md btn-green rounded bold"
-              @click="restore">
-              <div class="content">
-                Restore
-                <fa
-                  :icon="['fa', 'unlock']"
-                  class="icon"/>
-              </div>
-            </button>
+              @click.prevent.native="restore">
+              Restore
+              <fa
+                :icon="['fa', 'unlock']"
+                class="ml-2"/>
+            </button-rounded>
           </div>
           <div class="agreement">
             By using this Service you agree to our
-            <a 
+            <a
               href="https://softwareworksforyou.co.uk/terms-of-use/"
               target="_blank"
               class="blue">Terms of Use</a>
@@ -77,7 +75,7 @@
               target="_blank"
               href="https://weworktogethersoftware.com/contact-us">Help &amp; Support</a>
           </div>
-        </div>
+        </form>
       </div>
       <div class="footer-info">
         <div class="vat">
@@ -101,10 +99,12 @@
 
 <script>
 import InputTransparent from '~/components/inputTransparent/inputTransparent'
+import ButtonRounded from '~/components/buttonRounded'
+import { mapMutations } from 'vuex'
 
 export default {
   name: 'Token',
-  components: { InputTransparent },
+  components: { InputTransparent, ButtonRounded },
   layout: 'minimal',
   middleware: 'auth',
 
@@ -112,22 +112,37 @@ export default {
     return {
       email: '',
       token: null,
-      new_password: '',
-      password_confirmation: ''
+      newPassword: '',
+      passwordConfirmation: ''
     }
   },
   mounted() {
     this.token = this.$route.params.token
   },
   methods: {
+    ...mapMutations({ setToken: 'token/setToken' }),
     restore() {
       const params = {
         email: this.email,
         token: this.token,
-        password: this.new_password,
-        password_confirmation: this.password_confirmation
+        password: this.newPassword,
+        passwordConfirmation: this.passwordConfirmation
       }
-      this.$api().auth.restore(params)
+      this.$api.auth.restore(params).then(res => {
+        if (!res.error) {
+          this.login()
+        }
+      })
+    },
+    login() {
+      this.$api.auth
+        .login({ email: this.email, password: this.newPassword })
+        .then(res => {
+          if (res && res.accessToken) {
+            this.setToken(res.accessToken)
+            this.$router.push('/')
+          }
+        })
     }
   }
 }

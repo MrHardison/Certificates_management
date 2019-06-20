@@ -8,8 +8,9 @@
           :certificate="dataViewCertificate"
           :form="dataViewForm"
           :validation-errors="validationErrors"
-          @setName="certificate.name = $event"
-          @updateCertificate="updateCertificate()"
+          :preloading="preloading"
+          @setName="dataViewCertificate.name = $event"
+          @updateCertificate="updateCertificate($event)"
           @openPdf="render()"/>
         <data-view-container
           :data-view-form="dataViewForm"
@@ -28,7 +29,8 @@
       class="col-12">
       <nuxt-child
         :key="$route.params.id"
-        :data-view-certificate="dataViewCertificate"/>
+        :data-view-certificate="dataViewCertificate"
+        @showReturnButton="$emit('showReturnButton')"/>
     </div>
   </div>
 </template>
@@ -61,6 +63,10 @@ export default {
         data_list_group_id: 2,
         record_group_id: null,
         data: {}
+      },
+      preloading: {
+        update: false,
+        preview: false
       }
     }
   },
@@ -70,8 +76,8 @@ export default {
     })
   },
   mounted() {
-    this.$api()
-      .dataView.getById(this.$route.params.id)
+    this.$api.dataView
+      .getById(this.$route.params.id)
       .then(res => {
         this.dataViewCertificate = res.certificate
         this.dataViewForm = res.form
@@ -80,60 +86,65 @@ export default {
         this.loaded = true
         this.isLoading = false
       })
-    this.$api()
-      .dataGroups.dataListGroups()
-      .then(res => {
-        this.setdataListGroups(res)
-      })
+    this.$api.dataGroups.dataListGroups().then(res => {
+      this.setdataListGroups(res)
+    })
     this.clearOldSelectedOptions()
   },
   methods: {
     ...mapMutations({
       setdataListGroups: 'dataListGroups/setdataListGroups',
-      clearOldSelectedOptions: 'dataView/clearOldLookupSelectedOptions'
+      clearOldSelectedOptions: 'dataView/clearOldLookupSelectedOptions',
+      setStorageValidationErrors: 'validation/setErrors'
     }),
     setNewCertificateSections(data) {
       this.dataViewCertificate.sections = data
     },
-    saveData(fromTo) {
-      Object.keys(fromTo).forEach(fromId => {
+    saveData(data) {
+      _.forEach(_.keys(data.fromTo), fromId => {
         const fromElement = this.findCertificateElementByFormElementId(fromId)
         const toElement = this.findCertificateElementByFormElementId(
-          fromTo[fromId]
+          data.fromTo[fromId]
         )
-        toElement.record_group_id = fromElement.record_group_id
-        const recordGroupName = _.find(this.dataViewForm.sections, {
-          elements: [
-            {
-              id: toElement.form_section_element_id
-            }
-          ]
-        })
-        this.prepareData(recordGroupName)
-        recordGroupName.elements.forEach(element => {
-          if (element.id === toElement.form_section_element_id) {
-            if (fromElement.data.length > 0) {
-              this.params.data[element.rules.field_name] = fromElement.data
-            } else {
-              this.params.data[element.rules.field_name] = null
-            }
-          }
-        })
-        if (fromElement.record_group_id) {
-          this.params.record_group_id = fromElement.record_group_id
+        if (data.value) {
+          toElement.data = fromElement.data
+        } else {
+          toElement.data = ''
         }
+        // toElement.record_group_id = fromElement.record_group_id
+        // const recordGroupName = _.find(this.dataViewForm.sections, {
+        //   elements: [
+        //     {
+        //       id: toElement.form_section_element_id
+        //     }
+        //   ]
+        // })
+        // this.prepareData(recordGroupName)
+        // _.forEach(recordGroupName.elements, element => {
+        //   if (element.id === toElement.form_section_element_id) {
+        //     if (fromElement.data.length) {
+        //       this.params.data[element.rules.field_name] = fromElement.data
+        //     } else {
+        //       this.params.data[element.rules.field_name] = null
+        //     }
+        //   }
+        // })
+        // if (fromElement.record_group_id) {
+        //   this.params.record_group_id = fromElement.record_group_id
+        // }
       })
-      this.$api()
-        .recordGroups.add(this.params)
-        .then(res => {
-          if (res.status === 200) {
-            this.copyCertificateData(fromTo)
-          }
-        })
+      // this.params.data_list_group_id = data.dataListGroupId
+      // this.$api
+      //   .recordGroups.add(this.params)
+      //   .then(res => {
+      //     if (res.status === 200) {
+      //       this.copyCertificateData(data.fromTo)
+      //     }
+      //   })
     },
     prepareData(recordGroupName) {
       if (this.params.data.length <= 0) {
-        recordGroupName.elements.forEach(element => {
+        _.forEach(recordGroupName.elements, element => {
           if (
             (element.rules && element.rules.field_type !== 8) ||
             (element.rules && element.rules.field_type !== 13)
@@ -175,16 +186,37 @@ export default {
         }
       })
     },
-    updateCertificate() {
+    updateCertificate(render) {
       if (this.validationErrors.length === 0) {
+        let dataViewCertificate = _.cloneDeep(this.dataViewCertificate)
+        _.forEach(dataViewCertificate.sections, section => {
+          section.elements = _.filter(section.elements, element => {
+            if (!element.data.length && !element.certificate_section_id) {
+              return false
+            } else {
+              return element
+            }
+          })
+        })
         const params = {
-          name: this.dataViewCertificate.name,
-          sections: this.dataViewCertificate.sections
+          name: dataViewCertificate.name,
+          sections: dataViewCertificate.sections
         }
-        this.$api().dataView.update(this.$route.params.id, params)
+        if (!this.preloading.update && !this.preloading.preview) {
+          this.preloading.preview = render ? true : false
+          this.preloading.update = !this.preloading.preview ? true : false
+          this.$api.dataView.update(this.$route.params.id, params).then(res => {
+            this.dataViewCertificate = res
+            _.delay(() => {
+              this.preloading.update = false
+            }, 1000)
+            render ? this.render() : ''
+          })
+        }
       }
     },
     render() {
+      this.preloading.preview = false
       this.$router.push({
         name: `${this.$route.name}-certificate`
       })
@@ -250,15 +282,16 @@ export default {
         updatedElement[`record_lookups_${data.setLookupData.type[index]}`].push(
           {
             id: item,
-            data: dataArray[index]
+            data: dataArray[index],
+            record_type: data.setLookupData.type[index]
           }
         )
       })
       this.updateChildData(data.updateChildData)
     },
     updateChildData(data) {
-      this.$api()
-        .dataListDefaults.getDataListDefaults()
+      this.$api.dataListDefaults
+        .getDataListDefaults()
         .then(res => {
           this.dataListDefaults = res
         })
@@ -296,75 +329,77 @@ export default {
                   .form_section_element_id
               }
             )
-            const childCertificateElement = _.find(
-              parentCertificateSections.elements,
-              {
-                form_section_element_id: childFormElement.id
+            if (childFormElement) {
+              const childCertificateElement = _.find(
+                parentCertificateSections.elements,
+                {
+                  form_section_element_id: childFormElement.id
+                }
+              )
+              let lookupParams = {
+                data_list_default_id: childFormElement.data_list_default_id,
+                page: 1,
+                search_text: '',
+                interval: 1000,
+                record_lookup_id: null,
+                record_lookup_type: null
               }
-            )
-            const deletedSystemOptions = _.differenceBy(
-              oldSystemOptions,
-              parentCertificateElement.record_lookups_system,
-              'id'
-            )
-            const deletedCustomOptions = _.differenceBy(
-              oldCustomOptions,
-              parentCertificateElement.record_lookups_custom,
-              'id'
-            )
-            let lookupParams = {
-              data_list_default_id: childFormElement.data_list_default_id,
-              page: 1,
-              search_text: '',
-              interval: 1000,
-              record_lookup_id: null,
-              record_lookup_type: null
-            }
-            const clearOptions = (deletedOptions, type) => {
-              if (deletedOptions.length > 0) {
-                _.forEach(deletedOptions, option => {
-                  lookupParams.record_lookup_id = option.id
-                  lookupParams.record_lookup_type = type
-                  this.$api()
-                    .recordLookups.getRecordLookups(lookupParams)
-                    .then(res => {
-                      let deleteIds = []
-                      _.forEach(res.data, childLookup => {
-                        _.forEach(
-                          childCertificateElement[`record_lookups_${type}`],
-                          (childItem, index, object) => {
-                            if (childLookup.id === childItem.id) {
-                              deleteIds.push({
-                                id: childItem.id,
-                                data: childLookup.data
-                              })
+              const clearOptions = (deletedOptions, type) => {
+                if (deletedOptions.length > 0) {
+                  _.forEach(deletedOptions, option => {
+                    lookupParams.record_lookup_id = option.id
+                    lookupParams.record_lookup_type = type
+                    this.$api.recordLookups
+                      .getRecordLookups(lookupParams)
+                      .then(res => {
+                        let deleteIds = []
+                        _.forEach(res.data, childLookup => {
+                          _.forEach(
+                            childCertificateElement[`record_lookups_${type}`],
+                            (childItem, index, object) => {
+                              if (childLookup.id === childItem.id) {
+                                deleteIds.push({
+                                  id: childItem.id,
+                                  data: childLookup.data
+                                })
+                              }
                             }
-                          }
-                        )
-                      })
-                      let childCertificateElementData = childCertificateElement.data.split(
-                        ', '
-                      )
-                      _.forEach(deleteIds, item => {
-                        _.remove(
-                          childCertificateElement[`record_lookups_${type}`],
-                          i => {
-                            return i.id === item.id
-                          }
-                        )
-                        _.remove(childCertificateElementData, i => {
-                          return i === item.data
+                          )
                         })
+                        let childCertificateElementData = childCertificateElement.data.split(
+                          ', '
+                        )
+                        _.forEach(deleteIds, item => {
+                          _.remove(
+                            childCertificateElement[`record_lookups_${type}`],
+                            i => {
+                              return i.id === item.id
+                            }
+                          )
+                          _.remove(childCertificateElementData, i => {
+                            return i === item.data
+                          })
+                        })
+                        childCertificateElement.data = childCertificateElementData.join(
+                          ', '
+                        )
                       })
-                      childCertificateElement.data = childCertificateElementData.join(
-                        ', '
-                      )
-                    })
-                })
+                  })
+                }
               }
+              const deletedSystemOptions = _.differenceBy(
+                oldSystemOptions,
+                parentCertificateElement.record_lookups_system,
+                'id'
+              )
+              const deletedCustomOptions = _.differenceBy(
+                oldCustomOptions,
+                parentCertificateElement.record_lookups_custom,
+                'id'
+              )
+              clearOptions(deletedSystemOptions, 'system')
+              clearOptions(deletedCustomOptions, 'custom')
             }
-            clearOptions(deletedSystemOptions, 'system')
-            clearOptions(deletedCustomOptions, 'custom')
           } else {
             // ______________________update singleLookup child data______________________
             const childElement = _.find(this.dataListDefaults.data, {
@@ -408,18 +443,20 @@ export default {
         })
     },
     checkValidationErrors(error) {
-      if (error[1] === false) {
-        if (this.validationErrors.indexOf(error[0]) >= 0) {
+      if (!error.status) {
+        if (this.validationErrors.indexOf(error.id) >= 0) {
           this.validationErrors.splice(
-            this.validationErrors.indexOf(error[0]),
+            this.validationErrors.indexOf(error.id),
             1
           )
         }
-      } else if (error[1] === true) {
-        if (this.validationErrors.indexOf(error[0]) < 0) {
-          this.validationErrors.push(error[0])
+      } else if (error.status) {
+        if (this.validationErrors.indexOf(error.id) < 0) {
+          this.validationErrors.push(error.id)
         }
       }
+      const [...validationErrors] = this.validationErrors
+      this.setStorageValidationErrors(validationErrors)
     }
   }
 }

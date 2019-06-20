@@ -1,36 +1,41 @@
 <template>
   <div class="v-tick-box">
-    <button-rounded @click.native="$emit('copyData', copyData)">
-      {{ name }}
-    </button-rounded>
+    <checkbox
+      :label="name"
+      @change="value = $event"/>
   </div>
 </template>
 
 <script>
-import ButtonRounded from '~/components/buttonRounded'
+import checkbox from '~/components/checkbox'
+
 export default {
   name: 'TickBox',
-  components: { ButtonRounded },
+  components: { checkbox },
   props: {
     name: {
       type: String,
       default: 'Click to copy'
-    },
-    copyData: {
-      type: Object,
-      default() {
-        return {}
-      }
-    },
-    formSectionElements: {
-      type: Array,
-      default() {
-        return []
+    }
+  },
+  data() {
+    return {
+      value: false
+    }
+  },
+  watch: {
+    value: {
+      deep: true,
+      handler(data) {
+        this.$emit('copyData', data)
       }
     }
   }
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.v-tick-box {
+  margin: 0.75rem 0 0.25rem 0;
+}
 </style>

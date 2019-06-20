@@ -13,7 +13,7 @@
           class="item-icon"/>
       </span>
       <ul
-        v-if="isOpen"
+        v-show="isOpen"
         class="list-sriped mt-3">
         <checkbox
           :default-checked="manualChecked.read"
@@ -73,7 +73,8 @@ export default {
     }
   },
   beforeMount() {
-    this.opened ? (this.isOpen = true) : false
+    this.isOpen = this.opened ? true : false
+    // this.opened ? (this.isOpen = true) : false
     this.manualChecked = {
       read: this.defaultChecked.read,
       update: this.defaultChecked.update,

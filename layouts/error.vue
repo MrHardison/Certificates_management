@@ -67,7 +67,7 @@ export default {
     }
   }
 }
-@include mq($max-width: 500px) {
+@media (max-width: 500px) {
   .error-wrap {
     background: #eef1f5;
     .error-page {

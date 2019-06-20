@@ -1,5 +1,5 @@
 <template>
-  <div class="col-md-2">
+  <div class="col-sm-12 col-md-3 col-lg-3 col-xl-2">
     <nav class="sections-list">
       <ul>
         <template v-for="(section, index) in transformToTree">
@@ -8,7 +8,7 @@
             :key="index"
             :item="section"
             :active-section-id="activeSectionId"
-            :class="{active: section.id === activeSectionId, filled: checkSectionStatus(section) === 'filled'}"
+            :class="{active: section.id === activeSectionId, filled: checkSectionStatus(section) === 'filled', error: validationErrorSection(section) === 'error'}"
             @make-folder="makeFolder"
             @openSection="openSection($event)"
             @click.native="section.children.length === 0 && openSection(section.id)"/>
@@ -19,8 +19,8 @@
 </template>
 
 <script>
-import dataViewSectionsTree from './dataViewSectionsTree'
 import { mapGetters } from 'vuex'
+import dataViewSectionsTree from './dataViewSectionsTree'
 
 export default {
   name: 'DataViewSections',
@@ -44,12 +44,12 @@ export default {
     }
   },
   computed: {
-    ...mapGetters({ getSectionsStatus: 'dataView/getSectionsStatus' }),
+    ...mapGetters({
+      getSectionsStatus: 'dataView/getSectionsStatus',
+      storageValidationErrors: 'validation/getErrors'
+    }),
     transformToTree() {
-      const sections = []
-      _.forEach(this.sections, section => {
-        sections.push(_.assign({}, section))
-      })
+      const sections = _.cloneDeep(this.sections)
       let nodes = {}
       return _.filter(sections, obj => {
         let id = obj.id
@@ -66,8 +66,15 @@ export default {
     }
   },
   watch: {
-    openedSectionId() {
-      this.activeSectionId = this.openedSectionId
+    openedSectionId: {
+      deep: true,
+      handler(data) {
+        this.activeSectionId = this.openedSectionId
+        window.scroll({
+          top: 0,
+          left: 0
+        })
+      }
     }
   },
   methods: {
@@ -90,14 +97,6 @@ export default {
       Vue.set(item, 'children', [])
       this.addItem(item)
     },
-    backSections() {
-      const parent = _.find(this.sections, { id: this.parentSectionId })
-      if (parent && parent.form_section_id) {
-        this.parentSectionId = parent.form_section_id
-      } else {
-        this.parentSectionId = null
-      }
-    },
     openSection(id) {
       this.activeSectionId = id
       this.$emit('openSection', id)
@@ -106,6 +105,17 @@ export default {
         const hasChild = _.filter(this.sections, { form_section_id: id })
         if (hasChild.length > 0) {
           this.parentSectionId = id
+        }
+      }
+    },
+    validationErrorSection(section) {
+      for (let i = 0; i < this.storageValidationErrors.length; i++) {
+        const errorElement = _.find(section.elements, {
+          id: this.storageValidationErrors[i]
+        })
+        if (errorElement) {
+          return 'error'
+          break
         }
       }
     }
@@ -148,7 +158,7 @@ export default {
     &:hover,
     &.active {
       &::before {
-        background: $blue !important;
+        background: $blue;
       }
     }
     &.active {
@@ -159,7 +169,12 @@ export default {
       padding: 8px 10px;
 
       &::before {
-        background: $blue !important;
+        background: $blue;
+      }
+    }
+    &.error {
+      &::before {
+        background: red;
       }
     }
   }

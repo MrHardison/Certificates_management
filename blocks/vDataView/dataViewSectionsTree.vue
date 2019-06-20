@@ -86,7 +86,7 @@ export default {
 
   .arrow {
     transform: rotate(90deg);
-    transition: transform 0.5s;
+    transition: transform 0.2s;
   }
 
   &.active {
@@ -111,6 +111,7 @@ export default {
     overflow: hidden;
     position: relative;
     padding: 8px 20px;
+    transition: height 0.3s ease-in-out;
 
     & ~ .sections-item {
       margin-top: 10px;

@@ -3,6 +3,12 @@
     <div class="modal-mask">
       <div class="modal-wrapper">
         <div class="modal-container">
+          <div class="close">
+            <fa
+              :icon="['fal', 'times']"
+              class="input-icon"
+              @click="$emit('close')"/>
+          </div>
           <div class="modal-header">
             <h3>
               {{ header }}
@@ -46,6 +52,17 @@ export default {
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   transition: opacity 0.3s ease;
+
+  &.create-data-group {
+    .modal-wrapper {
+      .modal-container {
+        .modal-footer {
+          padding: 0;
+          border-top: none;
+        }
+      }
+    }
+  }
 }
 
 .modal-wrapper {
@@ -55,11 +72,20 @@ export default {
 }
 
 .modal-container {
+  background-color: #fff;
   border-radius: 10px !important;
   border: 1px solid rgba(0, 0, 0, 0.125);
-  width: 550px;
-  background-color: #fff;
   transition: all 0.3s ease;
+  position: relative;
+  width: 550px;
+
+  @media (max-width: 768px) {
+    width: 500px;
+  }
+
+  @media (max-width: 544px) {
+    width: 320px;
+  }
 }
 
 .modal-header h3 {
@@ -101,5 +127,19 @@ export default {
   width: 100vw;
   height: 100vh;
   z-index: 1;
+}
+.close {
+  cursor: pointer;
+  color: red;
+  font-size: 16px;
+  opacity: 1;
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  transition: transform 0.2s ease-in-out;
+
+  &:hover {
+    transform: scale(1.3);
+  }
 }
 </style>

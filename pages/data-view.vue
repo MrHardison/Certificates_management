@@ -3,13 +3,22 @@
     <div class="row">
       <div
         v-if="dataViews"
-        class="col">
+        class="col responsive">
+        <button-rounded
+          v-if="showBackButton"
+          class="btn-white rounded small mr-2 responsive"
+          @click.native="backToCertificate">
+          <fa
+            :icon="['fas', 'arrow-left']"
+            class="mr-2" />
+          Edit Certificate
+        </button-rounded>
         <template v-for="(dataView, index) in dataViews">
           <button-rounded
             :key="index"
             :class="{active: $route.params.name === dataView.route}"
-            class="btn-white rounded small mr-2"
-            @click.native="$router.push({name: 'data-view-:name', params: {name: dataView.route}})">
+            class="btn-white rounded small mr-2 responsive"
+            @click.native="moveTo(dataView)">
             {{ dataView.title }}
             <fa
               :icon="['far', dataView.icon.name]"
@@ -22,7 +31,8 @@
       <div class="col">
         <nuxt-child
           :key="$route.params.name"
-          :data-view="currentDataView" />
+          :data-view="currentDataView"
+          @showReturnButton="showBackButton = true"/>
       </div>
     </div>
   </section>
@@ -36,15 +46,22 @@ export default {
   name: 'DataView',
   components: { ButtonRounded },
   middleware: 'pages',
+  data() {
+    return {
+      showBackButton: false,
+      routeName: null,
+      routeId: null
+    }
+  },
   computed: {
     ...mapGetters({
       getMenuPage: 'menu/getMenuPage'
     }),
     dataViews() {
       const groups = this.getMenuPage('data-view')
-      if (groups && groups.properties.hasOwnProperty('sub_pages')) {
+      if (groups && _.has(groups.properties, 'sub_pages')) {
         return _.filter(groups.properties.sub_pages, tab => {
-          return tab.hasOwnProperty('visible') && tab.visible
+          return _.has(tab, 'visible') && tab.visible
         })
       }
       return []
@@ -82,9 +99,40 @@ export default {
         params: { name: this.dataViews[0].route }
       })
     }
+  },
+  methods: {
+    backToCertificate() {
+      this.showBackButton = false
+      this.$router.push({
+        name: 'data-view-:name-:id',
+        params: {
+          name: this.$route.params.name,
+          id: this.$route.params.id
+        }
+      })
+    },
+    moveTo(dataView) {
+      this.showBackButton = false
+      this.$router.push({
+        name: 'data-view-:name',
+        params: { name: dataView.route }
+      })
+    }
   }
 }
 </script>
 
 <style scoped lang="scss">
+.responsive {
+  @media (max-width: 544px) {
+    .btn {
+      margin: 0 0 1rem 0 !important;
+      width: 100%;
+
+      &:last-child {
+        margin-bottom: 0 !important;
+      }
+    }
+  }
+}
 </style>

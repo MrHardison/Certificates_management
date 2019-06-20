@@ -1,139 +1,148 @@
 <template>
-  <ul class="breadcrumb">
-    <template v-for="(item, index) in items">
-      <li
+  <ul class="breadcrumbs">
+    <template v-for="(item, index) in list">
+      <nuxt-link
+        :to="{name: 'data-groups-:name-:id', params: { name: item.link, id: item.id } }"
         :key="index"
-        class="breadcrumb__item active">
-        <nuxt-link :to="{name: item.name}">
-          <!-- <fa
-            :icon="['fal', item.icon]"
-            class="icon"/> -->
-          <span class="text">
-            {{ item.title }}
-          </span>
-        </nuxt-link>
+        class="breadcrumbs--item">
+        {{ item.text }}
         <fa
           :icon="['far', 'chevron-right']"
-          class="icon"/>
-      </li>
+          class="breadcrumbs--icon"/>
+      </nuxt-link>
     </template>
   </ul>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 export default {
   name: 'Breadcrumbs',
-  data() {
-    return {}
-  },
-  computed: {
-    items() {
-      let items = []
-      if (this.$route.matched) {
-        this.$route.matched.forEach((link, index) => {
-          items.push(
-            Object.assign(
-              {
-                title: this.getItemTitle(index)
-              },
-              link
-            )
-          )
-        })
+  props: {
+    data: {
+      type: Array,
+      default() {
+        return []
       }
-      if (items.length === 0) {
-        items.push({ path: '/', title: 'index' })
+    },
+    recordGroup: {
+      type: Object,
+      default() {
+        return {}
       }
-      return items
     }
   },
+  data() {
+    return {
+      dataListGroups: []
+    }
+  },
+  computed: {
+    ...mapGetters({ ui: 'menu/getMenuPages' }),
+    list() {
+      let list = []
+      _.forEach(this.data, item => {
+        let string = ''
+        _.forEach(
+          _.keys(this.$orderObject(item.data_group.schema)).slice(0, 3),
+          key => {
+            if (item.data[key]) {
+              string = string.length
+                ? `${string}, ${item.data[key]}`
+                : item.data[key]
+            }
+          }
+        )
+        list.push({
+          id: item.id,
+          link: this.getRoute(item.data_list_group_id),
+          text: string
+        })
+      })
+      list.push({
+        id: this.$route.params.id,
+        link: this.$route.params.name,
+        text: _.filter(_.values(this.recordGroup), item => {
+          return item !== null && item.length
+        })
+          .slice(0, 3)
+          .join(', ')
+      })
+      return list
+    }
+  },
+  mounted() {
+    this.getRoute()
+    this.getDataListDefaults()
+  },
   methods: {
-    getItemTitle(index) {
-      if (this.$route.hasOwnProperty('fullPath')) {
-        const title = this.$route.fullPath.split('/')[index + 1]
-        return title.length > 0
-          ? `${title.charAt(0).toUpperCase()}${title.slice(1)}`
-          : 'Home'
+    getRoute(dataListGroupId) {
+      const match = _.find(this.ui, {
+        properties: {
+          sub_pages: [
+            {
+              data_list_group_id: dataListGroupId
+            }
+          ]
+        }
+      })
+      if (match) {
+        const route = _.find(match.properties.sub_pages, {
+          data_list_group_id: dataListGroupId
+        }).route
+        return route
       }
+    },
+    getDataListDefaults() {
+      this.$api.dataGroups.dataListGroups().then(res => {
+        this.dataListGroups = res
+      })
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
-.breadcrumb {
-  box-sizing: border-box;
+.breadcrumbs {
+  align-items: center;
   background-color: #fff;
-  border: 1px solid #f9f9f9;
+  border: 1px solid $gray;
+  box-sizing: border-box;
   border-radius: 25px;
-  display: inline-block;
+  display: inline-flex;
+  flex-wrap: wrap;
   font-size: 12px;
   list-style: none;
   line-height: 16px;
-  margin: 0 0 0 15px;
-  padding: 4px 15px 4px 15px;
-  vertical-align: middle;
+  margin: 1rem 1rem 0;
+  padding: 0 15px;
+  justify-content: flex-start;
 
-  &__item {
+  &--item {
     color: $main_blue;
-    display: inline-block;
-    margin-right: 10px;
-    vertical-align: middle;
+    font-size: 14px;
+    margin-right: 5px;
+    padding: 0.5rem 20px 0.5rem 5px;
+    position: relative;
+    transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
 
-    a {
-      cursor: default;
-
-      &:hover {
-        .text {
-          text-decoration: underline;
-        }
-      }
-
-      svg {
-        margin: 0 5px 0 0;
-      }
-      .text {
-        cursor: pointer;
-        color: $main_blue;
-        display: inline-block;
-        font-size: 14px;
-        max-width: 130px;
-        min-width: 12px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        vertical-align: middle;
-        white-space: nowrap;
-      }
-    }
     &:last-child {
+      color: $gray;
       margin-right: 0;
-      a {
-        &:hover {
-          .text {
-            text-decoration: none;
-          }
-        }
-        svg {
-          display: inline-block;
-        }
-        .text {
-          color: #636c72;
-          cursor: default;
-        }
-      }
-      svg {
+      padding-right: 0;
+      pointer-events: none;
+
+      .breadcrumbs--icon {
         display: none;
       }
     }
-    svg {
-      margin-left: 10px;
-      vertical-align: middle;
-    }
   }
-}
-@media (max-width: 575px) {
-  .breadcrumb {
-    margin: 0 15px 20px 15px;
+
+  &--icon {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 }
 </style>

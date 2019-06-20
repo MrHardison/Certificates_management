@@ -15,8 +15,26 @@
             <spinner-loader />
           </div>
 
+          <v-modal
+            v-if="inputError"
+            header="Warning">
+            <template slot="body">
+              Name and description must be filled!
+            </template>
+            <div
+              slot="footer"
+              class="d-flex w-100">
+              <button-rounded
+                class="btn-green rounded small mx-auto"
+                @click.native="inputError = false">
+                OK
+              </button-rounded>
+            </div>
+          </v-modal>
+
           <div class="card-footer d-flex justify-content-end">
             <button-rounded
+              :preloading="preloading"
               class="btn-green rounded small mr-2"
               @click.native="createRole">
               Create
@@ -32,19 +50,21 @@
 import ButtonRounded from '~/components/buttonRounded'
 import SpinnerLoader from '~/components/spinerLoader'
 import VRole from '~/blocks/vRole/'
+import VModal from '~/components/vModal/vModal'
 
 export default {
   name: 'Create',
   components: {
     VRole,
     ButtonRounded,
+    VModal,
     SpinnerLoader
   },
   data() {
     return {
       role: {
-        name: 'Has no name',
-        description: 'Has no description',
+        name: '',
+        description: '',
         interface_restriction: {
           create: false,
           read: false,
@@ -54,9 +74,11 @@ export default {
       },
       tree: {},
       data_groups: {},
-      showModal: false,
       isLoading: false,
-      updatedRole: {}
+      updatedRole: {},
+      inputError: false,
+      checkPattern: /^$/,
+      preloading: false
     }
   },
   mounted() {
@@ -64,19 +86,30 @@ export default {
   },
   methods: {
     createRole() {
-      this.$api()
-        .roles.create(this.updatedRole)
-        .then(res => {
-          this.$router.push({
-            name: 'roles-and-permissions-roles-:id',
-            params: { id: res.data.data.id }
+      if (
+        !this.checkPattern.test(this.role.name) &&
+        !this.checkPattern.test(this.role.description)
+      ) {
+        if (!this.preloading) {
+          this.preloading = true
+          this.$api.roles.create(this.updatedRole).then(res => {
+            _.delay(() => {
+              this.preloading = false
+            }, 1000)
+            this.$router.push({
+              name: 'roles-and-permissions-roles-:id',
+              params: { id: res.data.data.id }
+            })
           })
-        })
+        }
+      } else {
+        this.inputError = true
+      }
     },
-    async setRole() {
+    setRole() {
       this.isLoading = true
-      return await this.$api()
-        .roles.getCreate()
+      this.$api.roles
+        .getCreate()
         .then(res => {
           this.tree = res.tree
         })

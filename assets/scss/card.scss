@@ -27,7 +27,7 @@
     border-radius: 0 0 10px 10px !important;
   }
 }
-@include mq($max-width: 767px) {
+@media (max-width: 767px) {
   .card {
     &-header {
       .row {
@@ -42,6 +42,35 @@
             margin-bottom: 25px;
             text-align: left;
           }
+        }
+      }
+    }
+  }
+}
+
+@media(max-width: 544px) {
+  .card {
+    &-footer {
+      flex-wrap: wrap;
+
+      .btn {
+        margin: 0;
+
+        &.responsive {
+          margin: 0 0 30px 0 !important;
+          width: 100%;
+        }
+      }
+
+      .btn-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        width: 100%;
+
+        .btn {
+          margin: 0 !important;
+          width: auto;
         }
       }
     }

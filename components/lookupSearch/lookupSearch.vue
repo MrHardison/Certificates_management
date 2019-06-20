@@ -1,12 +1,14 @@
 <template>
   <div>
     <input-standard
-      :label="name"
       :disabled="true"
       :computed_value="getCertificateElementData"
       :search_icon="true"
       class="left-icon"
-      @click.native="showLookupModal = true"/>
+      @click.native="showLookupModal = true" />
+    <div
+      v-if="error"
+      class="error-message">This field is required</div>
     <v-modal
       v-if="showLookupModal"
       header="Select lookup"
@@ -27,20 +29,17 @@
         class="d-flex w-100">
         <button-rounded
           v-show="searchText.length > 0"
-          class="btn-green rounded small"
+          :preloading="preloading"
+          class="btn-green rounded small preloading-mr0"
           @click.native="createCustomLookup">
           Create
-        </button-rounded>
-        <button-rounded
-          class="btn-green rounded small"
-          @click.native="selectedItemId !== null ? setData() : ''">
-          Select
         </button-rounded>
       </div>
     </v-modal>
     <v-modal
       v-if="needToSelectParentModal"
-      header="Warning">
+      header="Warning"
+      @close="needToSelectParentModal = false">
       <template slot="body">
         Please select {{ dataListDefaultName }}
       </template>
@@ -56,7 +55,8 @@
     </v-modal>
     <v-modal
       v-if="deleteLookupModal"
-      header="Warning">
+      header="Warning"
+      @close="deleteLookupModal = false">
       <template slot="body">
         Are you sure to delete "{{ itemToDelete.data }}"?
       </template>
@@ -64,7 +64,8 @@
         slot="footer"
         class="d-flex w-100 justify-content-between">
         <button-rounded
-          class="btn-green rounded small mx-auto"
+          :preloading="deletePreloading"
+          class="btn-green rounded small mx-auto preloading-mr0"
           @click.native="confirmDelete">
           Yes
         </button-rounded>
@@ -128,6 +129,10 @@ export default {
       default() {
         return []
       }
+    },
+    required: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -135,6 +140,7 @@ export default {
       searchText: '',
       selectedItemId: null,
       selectedItemType: null,
+      selectedItemData: null,
       showLookupModal: false,
       needToSelectParentModal: false,
       deleteLookupModal: false,
@@ -158,7 +164,10 @@ export default {
         record_lookup_type: 'system',
         data: ''
       },
-      isLoading: false
+      isLoading: false,
+      preloading: false,
+      deletePreloading: false,
+      error: false
     }
   },
   computed: {
@@ -195,12 +204,19 @@ export default {
       }
     }
   },
+  mounted() {
+    if (!this.getCertificateElementData.length) {
+      this.errorRequired(true)
+    } else {
+      this.errorRequired(false)
+    }
+  },
   methods: {
     getDataListDefaults() {
       this.isLoading = true
       this.recordLookups = []
-      this.$api()
-        .dataListDefaults.getDataListDefaults()
+      this.$api.dataListDefaults
+        .getDataListDefaults()
         .then(res => {
           this.dataListDefaults = res
         })
@@ -246,8 +262,8 @@ export default {
     },
     getRecordLookups() {
       this.isLoading = true
-      this.$api()
-        .recordLookups.getRecordLookups(this.params)
+      this.$api.recordLookups
+        .getRecordLookups(this.params)
         .then(res => {
           res.data.forEach(item => {
             this.recordLookups.push(item)
@@ -271,30 +287,29 @@ export default {
         form_section_element_id: parentElement.id
       })
     },
+    selectItem(item) {
+      this.selectedItemId = item.id
+      this.selectedItemType = item.record_lookup_type
+      this.selectedItemData = item.data
+      this.setData()
+      this.errorRequired(false)
+    },
     setData() {
       this.closeLookupModal()
       const childData = {
         dataListDefaultId: this.elDataListDefaultId,
         formSectionId: this.formSectionId
       }
-      const selectedItem = _.find(this.recordLookups, {
-        id: this.selectedItemId,
-        record_lookup_type: this.selectedItemType
-      })
       const data = {
         elementId: this.elementId,
-        data: selectedItem.data,
-        id: [selectedItem.id],
-        type: [selectedItem.record_lookup_type]
+        data: this.selectedItemData,
+        id: [this.selectedItemId],
+        type: [this.selectedItemType]
       }
       this.$emit('setLookupData', {
         setLookupData: data,
         updateChildData: childData
       })
-    },
-    selectItem(item) {
-      this.selectedItemId = item.id
-      this.selectedItemType = item.record_lookup_type
     },
     closeLookupModal() {
       this.searchText = ''
@@ -302,45 +317,73 @@ export default {
       this.showLookupModal = false
     },
     createCustomLookup() {
-      this.createLookupParams.data = this.searchText
-      if (this.createLookupParams.record_lookup_id) {
-        const parentSystemLookup = _.find(
-          this.getCertificateParentElement.record_lookups_system,
-          {}
-        )
-        const parentCustomLookup = _.find(
-          this.getCertificateParentElement.record_lookups_custom,
-          {}
-        )
-        if (parentSystemLookup) {
-          this.createLookupParams.record_lookup_type = 'system'
-        } else if (parentCustomLookup) {
-          this.createLookupParams.record_lookup_type = 'custom'
+      if (!this.preloading) {
+        this.preloading = true
+        this.createLookupParams.data = this.searchText
+        if (this.createLookupParams.record_lookup_id) {
+          const parentSystemLookup = _.find(
+            this.getCertificateParentElement.record_lookups_system,
+            {}
+          )
+          const parentCustomLookup = _.find(
+            this.getCertificateParentElement.record_lookups_custom,
+            {}
+          )
+          if (parentSystemLookup) {
+            this.createLookupParams.record_lookup_type = 'system'
+          } else if (parentCustomLookup) {
+            this.createLookupParams.record_lookup_type = 'custom'
+          }
         }
+        this.$api.recordLookups
+          .createRecordLookups(this.createLookupParams)
+          .then(res => {
+            _.delay(() => {
+              this.preloading = false
+            }, 1000)
+            this.recordLookups = []
+            this.getRecordLookups()
+            this.selectItem(res)
+          })
       }
-      this.$api()
-        .recordLookups.createRecordLookups(this.createLookupParams)
-        .then(res => {
-          this.recordLookups = []
-          this.getRecordLookups()
-        })
     },
     deleteCustomLookup(item) {
       this.itemToDelete = item
       this.deleteLookupModal = true
     },
     confirmDelete() {
-      this.$api()
-        .recordLookups.deleteRecordLookups(this.itemToDelete.id)
-        .then(res => {
-          this.deleteLookupModal = false
-          this.recordLookups = []
-          this.getRecordLookups()
-        })
+      if (!this.deletePreloading) {
+        this.deletePreloading = true
+        this.$api.recordLookups
+          .deleteRecordLookups(this.itemToDelete.id)
+          .then(res => {
+            _.delay(() => {
+              this.deletePreloading = false
+            }, 1000)
+            this.deleteLookupModal = false
+            this.recordLookups = []
+            this.getRecordLookups()
+          })
+      }
+    },
+    errorRequired(isError) {
+      if (this.required) {
+        const error = {
+          id: this.elementId || this._uid,
+          status: isError
+        }
+        this.error = isError
+        this.$emit('validationError', error)
+      }
     }
   }
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 0.5rem;
+}
 </style>

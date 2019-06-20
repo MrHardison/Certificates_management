@@ -7,13 +7,13 @@
         :tbody="tBody"
         :tfooter="tFooter"
         :is-loading="isLoading"
-        @set_page="page = $event"
-        @search_text="search_text = $event"
-        @order_by="orderBy = $event"
-        @interval="interval = $event">
+        @set_page="params.page = $event"
+        @search_text="debounceSearch($event)"
+        @order_by="setOrder($event)"
+        @interval="params.interval = $event">
         <template slot="header">
           <button-rounded
-            class="btn-green rounded"
+            class="btn-green rounded responsive"
             @click.native="$router.push({name: rules.button.route})">
             {{ rules.button.text }}
             <fa
@@ -38,7 +38,7 @@
           </button-rounded>
           <button-rounded
             class="btn-green rounded small mr-2"
-            @click.native="deleteRole(deleteModal.id)">
+            @click.native="deleteUser(deleteModal.id)">
             Yes, delete this
           </button-rounded>
         </div>
@@ -68,6 +68,16 @@ export default {
   },
   data() {
     return {
+      params: {
+        search_text: '',
+        page: 1,
+        interval: 10,
+        order_by_column: null,
+        order_by_direction: null
+      },
+      debounceSearch: _.debounce(text => {
+        this.params.search_text = text
+      }, 500),
       users: null,
       search_text: '',
       orderBy: {},
@@ -98,13 +108,15 @@ export default {
         return []
       }
       let newArr = []
-      this.users.data.forEach(row => {
-        let tr = {
-          actions: this.generateActions(row),
-          tr: this.generateRow(row)
-        }
-        newArr.push(tr)
-      })
+      if (this.users) {
+        _.forEach(this.users.data, row => {
+          let tr = {
+            actions: this.generateActions(row),
+            tr: this.generateRow(row)
+          }
+          newArr.push(tr)
+        })
+      }
       return newArr
     },
     tFooter() {
@@ -121,19 +133,21 @@ export default {
       }
     }
   },
-  mounted() {
+  watch: {
+    params: {
+      deep: true,
+      handler(data) {
+        this.getUsers()
+      }
+    }
+  },
+  beforeMount() {
     this.getUsers()
   },
   methods: {
     getUsers() {
-      this.$api()
-        .users.get({
-          page: this.page,
-          search_text: this.search_text,
-          order_by_column: this.orderBy.orderBy,
-          order_by_direction: this.orderBy.sortingDirection,
-          interval: this.interval
-        })
+      this.$api.users
+        .get(this.params)
         .then(res => {
           this.users = this.$timezone(res)
         })
@@ -179,16 +193,18 @@ export default {
       })
       return columns
     },
-    async deleteRole(id) {
+    deleteUser(id) {
       if (id) {
-        await this.$api()
-          .users.deleteById(id)
-          .then(res => {
-            document.location.reload(true)
-          })
+        this.$api.users.deleteById(id).then(res => {
+          this.getUsers()
+        })
       }
       this.deleteModal.show = false
       this.deleteModal.id = null
+    },
+    setOrder(order) {
+      this.params.order_by_column = order.orderBy
+      this.params.order_by_direction = order.sortingDirection
     }
   }
 }

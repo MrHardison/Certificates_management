@@ -182,21 +182,24 @@ export default {
     justify-content: flex-start;
 
     .item {
+      align-items: center;
       background: transparent;
       cursor: pointer;
+      display: inline-flex;
       height: 34px;
       margin: 0 3px;
-      min-width: 34px;
+      min-width: 35px;
       transition: background 0.2s;
+      justify-content: center;
 
       &:first-child {
         margin: 0 3px 0 0;
-        min-width: auto;
+        min-width: 35px;
       }
 
       &:last-child {
         margin: 0 0 0 3px;
-        min-width: auto;
+        min-width: 35px;
       }
       &.next,
       &.prev {
@@ -236,7 +239,7 @@ export default {
         font-size: 16px;
         font-weight: 400;
         line-height: 16px;
-        padding: 8px 12px;
+        // padding: 8px 12px;
         vertical-align: middle;
 
         &:hover {
@@ -252,7 +255,7 @@ export default {
   }
 }
 
-@include mq($max-width: 980px) {
+@media (max-width: 980px) {
   .showing_entries {
     width: 100%;
     justify-content: center;
@@ -269,7 +272,7 @@ export default {
   }
 }
 
-@include mq($max-width: 740px) {
+@media (max-width: 740px) {
   .pagination {
     .items {
       .item {
@@ -279,7 +282,7 @@ export default {
   }
 }
 
-@include mq($max-width: 480px) {
+@media (max-width: 480px) {
   .pagination {
     .items {
       flex-wrap: wrap;
@@ -309,7 +312,7 @@ export default {
         }
         &__container {
           display: flex;
-          margin-top: 25px;
+          margin-top: 20px;
           order: 5;
           justify-content: center;
           width: 100%;

@@ -20,11 +20,32 @@
             </div>
           </div>
 
-          <div class="card-footer d-flex justify-content-end">
+          <v-modal
+            v-if="inputError"
+            header="Warning">
+            <template slot="body">
+              Name and description must be filled!
+            </template>
+            <div
+              slot="footer"
+              class="d-flex w-100">
+              <button-rounded
+                class="btn-green rounded small mx-auto"
+                @click.native="inputError = false">
+                OK
+              </button-rounded>
+            </div>
+          </v-modal>
+
+          <div class="card-footer d-flex justify-content-end pr-0">
             <button-rounded
+              :preloading="preloading"
               class="btn-green rounded small mr-2"
               @click.native="createGroup">
               Create
+              <fa
+                :icon="['fal', 'plus']"
+                class="ml-2" />
             </button-rounded>
           </div>
         </div>
@@ -36,31 +57,47 @@
 <script>
 import ButtonRounded from '~/components/buttonRounded'
 import InputStandard from '~/components/inputStandard/inputStandard'
+import VModal from '~/components/vModal/vModal'
 
 export default {
   name: 'Create',
   components: {
     InputStandard,
-    ButtonRounded
+    ButtonRounded,
+    VModal
   },
   data() {
     return {
       group: {
         name: '',
         description: ''
-      }
+      },
+      inputError: false,
+      checkPattern: /^$/,
+      preloading: false
     }
   },
   methods: {
     createGroup() {
-      this.$api()
-        .groups.create(this.group)
-        .then(res => {
-          this.$router.push({
-            name: 'roles-and-permissions-groups-:id',
-            params: { id: res.data.data.id }
+      if (
+        !this.checkPattern.test(this.group.name) &&
+        !this.checkPattern.test(this.group.description)
+      ) {
+        if (!this.preloading) {
+          this.preloading = true
+          this.$api.groups.create(this.group).then(res => {
+            _.delay(() => {
+              this.preloading = false
+            }, 1000)
+            this.$router.push({
+              name: 'roles-and-permissions-groups-:id',
+              params: { id: res.data.data.id }
+            })
           })
-        })
+        }
+      } else {
+        this.inputError = true
+      }
     }
   }
 }

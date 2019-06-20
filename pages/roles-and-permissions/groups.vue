@@ -7,13 +7,13 @@
         :tbody="tBody"
         :tfooter="tFooter"
         :is-loading="isLoading"
-        @set_page="page = $event"
-        @search_text="search_text = $event"
-        @order_by="orderBy = $event"
-        @interval="interval = $event">
+        @set_page="params.page = $event"
+        @search_text="debounceSearch($event)"
+        @order_by="setOrder($event)"
+        @interval="params.interval = $event">
         <template slot="header">
           <button-rounded
-            class="btn-green rounded"
+            class="btn-green rounded responsive"
             @click.native="$router.push({name: rules.button.route})">
             {{ rules.button.text }}
             <fa
@@ -38,7 +38,7 @@
           </button-rounded>
           <button-rounded
             class="btn-green rounded small mr-2"
-            @click.native="deleteRole(deleteModal.id)">
+            @click.native="deleteGroup(deleteModal.id)">
             Yes, delete this
           </button-rounded>
         </div>
@@ -69,11 +69,18 @@ export default {
   },
   data() {
     return {
-      search_text: '',
-      orderBy: {},
-      page: 1,
+      groups: {},
+      params: {
+        search_text: '',
+        page: 1,
+        interval: 10,
+        order_by_column: null,
+        order_by_direction: null
+      },
+      debounceSearch: _.debounce(text => {
+        this.params.search_text = text
+      }, 500),
       isLoading: true,
-      interval: 10,
       deleteModal: {
         show: false,
         id: null
@@ -98,13 +105,15 @@ export default {
         return []
       }
       let newArr = []
-      this.groups.data.forEach(row => {
-        let tr = {
-          actions: this.generateActions(row),
-          tr: this.generateRow(row)
-        }
-        newArr.push(tr)
-      })
+      if (this.groups) {
+        _.forEach(this.groups.data, row => {
+          let tr = {
+            actions: this.generateActions(row),
+            tr: this.generateRow(row)
+          }
+          newArr.push(tr)
+        })
+      }
       return newArr
     },
     tFooter() {
@@ -121,23 +130,29 @@ export default {
       }
     }
   },
-  asyncComputed: {
-    async groups() {
+  watch: {
+    params: {
+      deep: true,
+      handler(data) {
+        this.getGroups()
+      }
+    }
+  },
+  mounted() {
+    this.getGroups()
+  },
+  methods: {
+    getGroups() {
       this.isLoading = true
-      return await this.$api()
-        .groups.get({
-          page: this.page,
-          search_text: this.search_text,
-          order_by_column: this.orderBy.orderBy,
-          order_by_direction: this.orderBy.sortingDirection,
-          interval: this.interval
+      this.$api.groups
+        .get(this.params)
+        .then(res => {
+          this.groups = res
         })
         .finally(() => {
           this.isLoading = false
         })
-    }
-  },
-  methods: {
+    },
     generateActions(row) {
       let actions = []
       this.$order(this.tBodyRules.actions).forEach(item => {
@@ -176,16 +191,18 @@ export default {
       })
       return columns
     },
-    async deleteRole(id) {
+    deleteGroup(id) {
       if (id) {
-        await this.$api()
-          .groups.deleteById(id)
-          .then(res => {
-            document.location.reload(true)
-          })
+        this.$api.groups.deleteById(id).then(res => {
+          this.getGroups()
+        })
       }
       this.deleteModal.show = false
       this.deleteModal.id = null
+    },
+    setOrder(order) {
+      this.params.order_by_column = order.orderBy
+      this.params.order_by_direction = order.sortingDirection
     }
   }
 }

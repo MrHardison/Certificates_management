@@ -1,44 +1,49 @@
 <template>
-  <div
-    v-click-outside="hideDropdown"
-    :class="{open: open}"
-    class="dropdown">
+  <div>
     <div
-      class="header"
-      @click="open = !open">
-      <template v-if="!options.length">
-        <span class="title">No data</span>
-      </template>
-      <template v-else-if="!selected">
-        <div class="title">No items selected</div>
-      </template>
-      <template v-else>
-        <div class="title">{{ selected }}</div>
-      </template>
-    </div>
-    <div
+      v-click-outside="hideDropdown"
       :class="{open: open}"
-      class="content">
-      <input
-        v-if="showSearch"
-        v-model="searchText"
-        type="text"
-        placeholder="Search"
-        class="form-control form-control-sm border-0"
-        @keyup="debounceSearch">
-      <ul
-        class="options">
-        <template v-for="(option, index) in filteredOptions">
-          <li
-            :key="index"
-            :class="{active: option === selected}"
-            class="option"
-            @click="selectOption(option)">
-            {{ getOptionView(option) }}
-          </li>
+      class="dropdown">
+      <div
+        class="header"
+        @click="open = !open">
+        <template v-if="!options.length">
+          <span class="title">No data</span>
         </template>
-      </ul>
+        <template v-else-if="!selected">
+          <div class="title">No items selected</div>
+        </template>
+        <template v-else>
+          <div class="title">{{ selected }}</div>
+        </template>
+      </div>
+      <div
+        :class="{open: open}"
+        class="content">
+        <input
+          v-if="showSearch"
+          v-model="searchText"
+          type="text"
+          placeholder="Search"
+          class="form-control form-control-sm border-0"
+          @keyup="debounceSearch">
+        <ul
+          class="options">
+          <template v-for="(option, index) in filteredOptions">
+            <li
+              :key="index"
+              :class="{active: option === selected}"
+              class="option"
+              @click="selectOption(option)">
+              {{ getOptionView(option) }}
+            </li>
+          </template>
+        </ul>
+      </div>
     </div>
+    <div
+      v-if="error && required"
+      class="error-message">This field is required</div>
   </div>
 </template>
 
@@ -46,6 +51,10 @@
 export default {
   name: 'VDropdown',
   props: {
+    elementId: {
+      type: Number,
+      default: null
+    },
     options: {
       type: Array,
       default() {
@@ -59,6 +68,14 @@ export default {
     showSearch: {
       type: Boolean,
       default: false
+    },
+    selectedItem: {
+      type: String,
+      default: ''
+    },
+    required: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -66,7 +83,8 @@ export default {
       open: false,
       selected: null,
       searchText: '',
-      debounceSearch: null
+      debounceSearch: null,
+      error: false
     }
   },
   computed: {
@@ -74,7 +92,7 @@ export default {
       if (this.showSearch) {
         return _.filter(this.options, option => {
           return (
-            option.title.toLowerCase().indexOf(this.searchText.toLowerCase()) >
+            option.value.toLowerCase().indexOf(this.searchText.toLowerCase()) >
             -1
           )
         })
@@ -89,37 +107,41 @@ export default {
     }, 1000)
   },
   mounted() {
-    if (this.defaultSelected >= 0 && this.options.length) {
-      this.selected = this.options[this.defaultSelected]
+    if (!this.selectedItem.length) {
+      this.errorRequired(true)
+    }
+    if (this.selectedItem.length) {
+      this.getSelectedOption()
+    } else {
+      const selectedOption = _.find(this.options, {
+        selected: true
+      })
+      if (this.defaultSelected >= 0 && this.options.length) {
+        this.selected = this.options[this.defaultSelected]
+      } else if (selectedOption) {
+        this.selected = selectedOption.label
+      }
     }
   },
   methods: {
     hideDropdown() {
       this.open = false
     },
-    // handleScroll(e) {
-    //   if (!this.enablePagination) {
-    //     return
-    //   }
-    //   const target = e.target
-    //   if (target.scrollHeight - target.clientHeight - target.scrollTop < 5) {
-    //     this.debounceScroll()
-    //   }
-    // },
     getOptionView(option) {
       if (typeof option === 'string' || typeof option === 'number') {
         return option
-      } else if (typeof option === 'object' && option.hasOwnProperty('title')) {
-        return option.title
+      } else if (typeof option === 'object' && option.hasOwnProperty('value')) {
+        return option.value
       } else if (
         typeof option === 'object' &&
-        !option.hasOwnProperty('title')
+        !option.hasOwnProperty('value')
       ) {
         return `Empty title - ${this.options.indexOf(option)}`
       }
     },
     selectOption(option) {
       this.hideDropdown()
+      this.errorRequired(false)
 
       this.selected = this.getOptionView(option)
       if (typeof option === 'string' || typeof option === 'number') {
@@ -130,6 +152,24 @@ export default {
         return this.$emit('update', this.options.indexOf(option))
       }
       this.$emit('update', this.options.indexOf(option))
+    },
+    getSelectedOption() {
+      const selectedOption = _.find(this.options, {
+        value: this.selectedItem
+      })
+      if (selectedOption) {
+        this.selected = selectedOption.value
+      }
+    },
+    errorRequired(isError) {
+      if (this.required) {
+        const error = {
+          id: this.elementId || this._uid,
+          status: isError
+        }
+        this.error = isError
+        this.$emit('validationError', error)
+      }
     }
   }
 }

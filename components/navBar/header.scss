@@ -15,7 +15,7 @@
 
   .header_container {
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     display: flex;
     margin: 0 15px;
     height: 80px;
@@ -158,12 +158,12 @@
   }
 }
 
-@include mq($max-width: 778px) {
+@media (max-width: 778px) {
   .buttons {
     display: none;
   }
 }
-@include mq($max-width: 768px) {
+@media (max-width: 768px) {
   .header {
     &.open {
       padding-left: 0;
@@ -175,7 +175,7 @@
     }
   }
 }
-@include mq($max-width: 425px) {
+@media (max-width: 425px) {
   .header {
     padding-left: 0px;
     &.active {
@@ -213,7 +213,7 @@
     }
   }
 }
-@include mq($max-width: 380px) {
+@media (max-width: 380px) {
   .header {
     .header_container {
       .hamburger {

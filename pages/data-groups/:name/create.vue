@@ -25,7 +25,7 @@
                 </div>
               </template>
               <div
-                v-if="data_list_group_id"
+                v-if="parentDataListGroup"
                 class="col-md-4">
                 <label class="label">Parent</label>
                 <dropdown
@@ -43,12 +43,32 @@
         </div>
         <div class="card-footer d-flex justify-content-end">
           <button-rounded
-            :class="{disabled: disableSubmit}"
-            class="btn-green rounded small mr-2"
+            :preloading="preloading"
+            class="btn-green rounded small mr-2 preloading-mr0"
             @click.native="addRecord">
             Add
+            <fa
+              :icon="['fal', 'plus']"
+              class="ml-2" />
           </button-rounded>
         </div>
+        <v-modal
+          v-if="parentError"
+          header="Warning"
+          @close="parentError = false">
+          <template slot="body">
+            Need to select parent data group
+          </template>
+          <div
+            slot="footer"
+            class="d-flex w-100">
+            <button-rounded
+              class="btn-green rounded small mx-auto"
+              @click.native="parentError = false">
+              Close
+            </button-rounded>
+          </div>
+        </v-modal>
       </div>
     </div>
   </div>
@@ -87,98 +107,88 @@ export default {
       record_group_id: null,
       showModal: false,
       isLoading: false,
-      data_list_group_id: null,
+      parentDataListGroup: null,
       options: [],
       selectedOption: null,
       page: 1,
-      disableSubmit: false,
+      parentError: false,
       parentOptions: [],
-      inputErrors: []
-    }
-  },
-  watch: {
-    selectedOption: {
-      deep: true,
-      handler(data) {
-        if (this.dataListGroupId === 2 && data) {
-          this.disableSubmit = false
-        }
-      }
+      inputErrors: [],
+      preloading: false
     }
   },
   mounted() {
-    this.$api()
-      .dataGroups.getById(this.dataListGroupId)
+    this.$api.dataGroups
+      .getById(this.dataListGroupId)
       .then(res => {
         this.dataGroup = res
-        this.data_list_group_id = res.data_list_group_id
-        if (this.dataListGroupId === 2 && !this.selectedOption) {
-          this.disableSubmit = true
-        }
+        this.parentDataListGroup = res.data_list_group_id
       })
       .finally(() => {
         this.isLoading = false
-        this.data_list_group_id ? this.getOptions() : ''
+        this.parentDataListGroup ? this.getOptions() : ''
       })
   },
   methods: {
     addRecord() {
-      if (this.selectedOption && this.dataListGroupId === 2) {
-        this.addRecordGroup(this.dataListGroupId)
+      if (this.parentDataListGroup !== 0) {
+        if (!this.selectedOption) {
+          this.parentError = true
+        } else {
+          this.addRecordGroup(this.dataListGroupId)
+        }
       } else {
-        if (this.dataListGroupId !== 2) {
+        if (this.parentDataListGroup === 0) {
           this.addRecordGroup()
         }
       }
     },
     addRecordGroup(dataListGroupId) {
-      this.$api()
-        .recordGroups.add({
-          record_group_id:
-            dataListGroupId === 2 ? this.getOptionId() : this.record_group_id,
-          data_list_group_id: this.dataListGroupId,
-          data: this.recordGroup,
-          deleted_at: null
-        })
-        .then(res => {
-          this.$router.push({
-            name: 'data-groups-:name-:id',
-            params: {
-              name: this.$route.params.name,
-              id: res.data.data.id
-            }
+      if (!this.preloading) {
+        this.preloading = true
+        this.$api.recordGroups
+          .add({
+            record_group_id:
+              this.parentDataListGroup !== 0
+                ? this.getOptionId()
+                : this.record_group_id,
+            data_list_group_id: this.dataListGroupId,
+            data: this.recordGroup,
+            deleted_at: null
           })
-        })
+          .then(res => {
+            _.delay(() => {
+              this.preloading = false
+            }, 1000)
+            this.$router.push({
+              name: 'data-groups-:name-:id',
+              params: {
+                name: this.$route.params.name,
+                id: res.id
+              }
+            })
+          })
+      }
     },
     getOptions() {
-      this.$api()
-        .recordGroups.get({
-          data_list_group_id: this.data_list_group_id,
+      this.$api.recordGroups
+        .get({
+          data_list_group_id: this.parentDataListGroup,
           page: this.page,
           interval: 10
         })
         .then(res => {
-          res.data.forEach(item => {
+          _.forEach(res.data, item => {
             this.options.push({
-              title: Object.values(item['child.data']).join(', '),
+              value: Object.values(item['child.data']).join(', '),
               id: item['child.id']
             })
           })
-          for (let i = 2; i <= res.last_page; i++) {
-            this.$api()
-              .recordGroups.get({
-                data_list_group_id: this.data_list_group_id,
-                page: i,
-                interval: 10
-              })
-              .then(res => {
-                res.data.forEach(item => {
-                  this.options.push({
-                    title: Object.values(item['child.data']).join(', '),
-                    id: item['child.id']
-                  })
-                })
-              })
+          if (res.next_page_url !== null) {
+            ++this.page
+            this.getOptions()
+          } else {
+            this.page = 1
           }
         })
     },

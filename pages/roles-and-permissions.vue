@@ -1,15 +1,12 @@
 <template>
   <section class="container-fluid">
     <div class="row">
-      <breadcrump class="d-block d-sm-none"/>
-    </div>
-    <div class="row">
       <div
         v-if="pages"
-        class="col">
+        class="col responsive">
         <button-rounded
           :class="{active: isActiveRoles}"
-          class="btn-white rounded small mr-2"
+          class="btn btn-white rounded small mr-2 responsive"
           @click.native="$router.push({name: 'roles-and-permissions-roles'})">
           Roles
           <fa
@@ -18,7 +15,7 @@
         </button-rounded>
         <button-rounded
           :class="{active: isActiveGroups}"
-          class="btn-white rounded small mr-2"
+          class="btn btn-white rounded small mr-2 responsive"
           @click.native="$router.push({name: 'roles-and-permissions-groups'})">
           Groups
           <fa
@@ -27,7 +24,7 @@
         </button-rounded>
         <button-rounded
           :class="{active: isActiveUsers}"
-          class="btn-white rounded small mr-2"
+          class="btn btn-white rounded small mr-2 responsive"
           @click.native="$router.push({name: 'roles-and-permissions-users'})">
           Users
           <fa
@@ -49,11 +46,10 @@
 <script>
 import { mapGetters } from 'vuex'
 import ButtonRounded from '../components/buttonRounded/buttonRounded'
-import Breadcrump from '../components/breadcrumbs/Breadcrumbs'
 
 export default {
   name: 'Index',
-  components: { ButtonRounded, Breadcrump },
+  components: { ButtonRounded },
   middleware: 'pages',
   computed: {
     ...mapGetters({
@@ -125,4 +121,16 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.responsive {
+  @media (max-width: 544px) {
+    .btn {
+      margin: 0 0 1rem 0 !important;
+      width: 100%;
+
+      &:last-child {
+        margin-bottom: 0 !important;
+      }
+    }
+  }
+}
 </style>

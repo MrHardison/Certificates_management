@@ -1,7 +1,7 @@
 <template>
   <div>
     <button-rounded
-      class="btn-green rounded small mr-2"
+      class="btn-green rounded small mr-2 responsive-text"
       @click.native="searchRecordGroupsModal = true">
       <fa
         :icon="['fal', 'search']"
@@ -10,14 +10,17 @@
     </button-rounded>
     <v-modal
       v-if="searchRecordGroupsModal"
-      class="find-customer-modal"
-      header="Select data group"
-      @close="searchRecordGroupsModal = false">
-      <template slot="body">
+      :header="modalTitle()"
+      :class="{'create-data-group': createRecordGroup}"
+      class="find-datagroup-modal"
+      @close="closeRecordGroupModal">
+      <template
+        v-if="!createRecordGroup"
+        slot="body">
         <input-standard
           :computed_value="params.search_text"
           :search_icon="true"
-          label="Search in data groups"
+          :label="`Search in ${dataGroup.name}`"
           placeholder="Type the text"
           class="search-input"
           @update="params.search_text = $event"/>
@@ -32,9 +35,17 @@
               <template v-for="(item, index) in recordGroupOptions">
                 <div
                   :key="index"
-                  class="modal-list-customer"
-                  @click="setData(item)">
-                  {{ renderData(item) }}
+                  class="modal-list-datagroup">
+                  <div
+                    class="modal-list-datagroup-item"
+                    @click="setData(item)">
+                    {{ renderData(item) }}
+                  </div>
+                  <fa
+                    v-if="selectedRecordGroupId !== item['child.id']"
+                    :icon="['fas', 'times-circle']"
+                    class="delete-datagroup"
+                    @click="deleteRecordGroup(item)"/>
                 </div>
               </template>
             </template>
@@ -47,7 +58,19 @@
           </template>
         </div>
       </template>
-      <div slot="footer">
+      <template
+        v-if="createRecordGroup"
+        slot="body">
+        <data-group-create
+          :key="dataListGroupId"
+          :data-list-group-id="dataListGroupId"
+          :parent-record-group-id="parentRecordGroupId"
+          @setRecordGroup="setData($event)"
+          @close="updateList"/>
+      </template>
+      <div
+        v-if="!createRecordGroup"
+        slot="footer">
         <button-rounded
           class="btn-smoke rounded small mr-2"
           @click.native="searchRecordGroupsModal = false">
@@ -55,8 +78,8 @@
         </button-rounded>
         <button-rounded
           class="btn-green rounded small mr-2"
-          @click.native="createRecordGroupModal = true">
-          Create
+          @click.native="createRecordGroup = true">
+          Create New Record
         </button-rounded>
       </div>
     </v-modal>
@@ -76,13 +99,28 @@
         </button-rounded>
       </div>
     </v-modal>
-    <data-group-create
-      v-if="createRecordGroupModal"
-      :key="dataListGroupId"
-      :data-group-id="dataListGroupId"
-      :parent-record-group-id="parentRecordGroupId"
-      @close="createRecordGroupModal = false"
-      @setCustomerData="setData($event)"/>
+    <v-modal
+      v-if="confirmDelete"
+      header="Warning"
+      @close="confirmDelete = false">
+      <template slot="body">
+        Are you sure that you want to delete this item?
+      </template>
+      <div
+        slot="footer"
+        class="d-flex w-100 justify-content-between">
+        <button-rounded
+          class="btn-smoke rounded small"
+          @click.native="confirmDelete = false">
+          Close
+        </button-rounded>
+        <button-rounded
+          class="btn-green rounded small"
+          @click.native="deleteRecordGroup(false)">
+          Delete
+        </button-rounded>
+      </div>
+    </v-modal>
   </div>
 </template>
 
@@ -110,6 +148,10 @@ export default {
       type: String,
       default: ''
     },
+    openDataGroupSearch: {
+      type: Boolean,
+      default: false
+    },
     dataListGroupId: {
       type: Number,
       default: null
@@ -134,16 +176,20 @@ export default {
       dataGroup: {},
       recordGroups: [],
       searchRecordGroupsModal: false,
-      createRecordGroupModal: false,
+      createRecordGroup: false,
       needToSelectParentModal: false,
+      confirmDelete: false,
+      deleteItem: null,
       parentRecordGroupId: null,
       isLoading: false,
       params: {
         data_list_group_id: this.dataListGroupId,
         page: 1,
         search_text: '',
-        interval: 500
-      }
+        interval: 500,
+        record_group_id: null
+      },
+      preloading: false
     }
   },
   computed: {
@@ -167,38 +213,46 @@ export default {
           this.getRecordGroups()
         }
       }
+    },
+    openDataGroupSearch: {
+      deep: true,
+      handler(data) {
+        if (data) {
+          this.searchRecordGroupsModal = true
+        }
+        this.$emit('closeDataGroupSearch')
+      }
     }
+  },
+  created() {
+    const data = {
+      dataListGroupId: this.dataListGroupId,
+      parentRecordGroupId: this.parentRecordGroupId
+    }
+    this.$emit('getRecordGroupParams', data)
   },
   mounted() {
     this.getDataGroup()
   },
   methods: {
     getDataGroup() {
-      this.$api()
-        .dataGroups.getById(this.dataListGroupId)
-        .then(res => {
-          this.dataGroup = res
-        })
+      this.$api.dataGroups.getById(this.dataListGroupId).then(res => {
+        this.dataGroup = res
+      })
     },
     getRecordGroups() {
       if (this.dataListGroupId || this.dataGroup) {
-        if (this.dataGroup.data_list_group_id) {
-          const parent = _.find(this.selectedRecordGroups, {
-            data_list_group_id: this.dataGroup.data_list_group_id
-          })
-          if (!parent) {
-            this.searchRecordGroupsModal = false
-            this.needToSelectParentModal = true
-          } else {
-            this.needToSelectParentModal = false
-            this.parentRecordGroupId = parent.record_group_id
-            this.params.record_group_id = parent.record_group_id
-          }
+        const parent = _.find(this.selectedRecordGroups, {
+          data_list_group_id: this.dataGroup.data_list_group_id
+        })
+        if (parent) {
+          this.parentRecordGroupId = parent.record_group_id
+          this.params.record_group_id = parent.record_group_id
         }
         if (this.getToken) {
           this.isLoading = true
-          this.$api()
-            .recordGroups.get(this.params)
+          this.$api.recordGroups
+            .get(this.params)
             .then(res => {
               res.data.forEach(item => {
                 this.recordGroups.push(item)
@@ -218,7 +272,7 @@ export default {
     },
     setData(data) {
       this.searchRecordGroupsModal = false
-      this.$emit('setCustomerData', data)
+      this.$emit('setDataGroup', data)
     },
     renderData(recordGroup) {
       const res = []
@@ -234,24 +288,77 @@ export default {
     },
     goToChooseParent() {
       this.$emit('chooseParent', this.dataGroup.data_list_group_id)
+    },
+    modalTitle() {
+      if (!this.createRecordGroup) {
+        return `Select ${this.dataGroup.name}`
+      } else if (this.createRecordGroup) {
+        return 'Create'
+      }
+    },
+    updateList() {
+      this.recordGroups = []
+      this.getRecordGroups()
+      this.createRecordGroup = false
+    },
+    deleteRecordGroup(item) {
+      if (item) {
+        this.deleteItem = item
+        this.confirmDelete = true
+      } else if (this.deleteItem) {
+        if (!this.preloading) {
+          this.preloading = true
+          this.confirmDelete = false
+          this.$api.recordGroups
+            .deleteById(this.deleteItem['child.id'])
+            .then(res => {
+              this.deleteItem = null
+              _.delay(() => {
+                this.preloading = false
+              })
+              this.recordGroups = []
+              this.getRecordGroups()
+            })
+        }
+      }
+    },
+    closeRecordGroupModal() {
+      this.searchRecordGroupsModal = false
+      this.createRecordGroup = false
     }
   }
 }
 </script>
 
 <style lang="scss">
-.modal-list-customer {
+.modal-list-datagroup {
+  align-items: center;
   border-bottom: 1px solid rgba($gray, 0.3);
-  cursor: pointer;
+  display: flex;
   font-size: 14px;
   padding: 5px 0;
+  justify-content: space-between;
 
-  &:hover {
-    text-decoration: underline;
+  &-item {
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  .delete-datagroup {
+    cursor: pointer;
+    color: red;
+    margin: 0 10px;
+    transition: transform 0.1s ease-in-out;
+
+    &:hover {
+      transform: scale(1.5);
+    }
   }
 }
 
-.find-customer-modal {
+.find-datagroup-modal {
   .modal-wrapper {
     .modal-container {
       .modal-body {

@@ -9,7 +9,7 @@
           <input
             v-model="model"
             :value="item.value"
-            :name="name"
+            :name="name + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)"
             class="form-radio-input"
             type="radio">
           <div class="radio__text">
@@ -18,6 +18,9 @@
         </label>
       </div>
     </template>
+    <div
+      v-if="error"
+      class="error-text">This field is required</div>
   </div>
 </template>
 
@@ -25,6 +28,10 @@
 export default {
   name: 'Radio',
   props: {
+    elementId: {
+      type: Number,
+      default: null
+    },
     options: {
       type: Array,
       default() {
@@ -38,17 +45,27 @@ export default {
     selected: {
       type: String,
       default: ''
+    },
+    required: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
-      model: ''
+      model: '',
+      error: false
     }
   },
   watch: {
     model: {
       deep: true,
       handler(data) {
+        if (!data) {
+          this.errorRequired(true)
+        } else {
+          this.errorRequired(false)
+        }
         this.$emit('change', this.model)
       }
     }
@@ -62,7 +79,22 @@ export default {
     if (this.selected.length > 0) {
       this.model = this.selected
     }
+    if (!this.model.length) {
+      this.errorRequired(true)
+    }
     this.$emit('change', this.model)
+  },
+  methods: {
+    errorRequired(isError) {
+      if (this.required) {
+        const error = {
+          id: this.elementId || this._uid,
+          status: isError
+        }
+        this.error = isError
+        this.$emit('validationError', error)
+      }
+    }
   }
 }
 </script>
@@ -112,5 +144,9 @@ export default {
 }
 .radio input:checked + .radio__text::before {
   background: $blue;
+}
+.error-text {
+  color: red;
+  font-size: 14px;
 }
 </style>

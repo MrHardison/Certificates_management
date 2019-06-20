@@ -79,8 +79,8 @@ export default {
         record_group_id: this.$route.params.id
       }
       if (this.tab.model === 'certificates') {
-        return this.$api()
-          .recordGroups.getCertificatesById(this.$route.params.id, params)
+        return this.$api.recordGroups
+          .getCertificatesById(this.$route.params.id, params)
           .then(res => {
             return res
           })
@@ -88,8 +88,8 @@ export default {
             this.isLoading = false
           })
       } else if (this.tab.model === 'record_groups') {
-        return this.$api()
-          .recordGroups.get(params)
+        return this.$api.recordGroups
+          .get(params)
           .then(res => {
             return res
           })

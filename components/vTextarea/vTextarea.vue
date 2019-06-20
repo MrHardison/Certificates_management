@@ -1,17 +1,18 @@
 <template>
   <div class="form-group">
     <template v-if="label">
-      <label>{{ label }}</label>
+      <label>{{ description || label }}</label>
     </template>
     <div class="control-body">
       <textarea
         :type="type"
-        :class="{limited:limits && limits.hasOwnProperty('max'), 'is-error': error, 'is-warning': warning}"
+        :class="{limited:limits && limits.hasOwnProperty('max'), 'is-error': error}"
         :placeholder="placeholder"
         :readonly="disabled ? true : false"
         :maxlength="limits.max ? parseInt(limits.max) : 200"
         v-model="value"
-        class="form-control"/>
+        class="form-control"
+        @blur="validation" />
       <template v-if="limits && limits.hasOwnProperty('max')">
         <span class="limits">
           <span class="current">{{ value != null ? value.length : 0 }}</span>
@@ -21,12 +22,7 @@
       </template>
       <template v-if="error">
         <span class="message-error">
-          {{ error_message }}
-        </span>
-      </template>
-      <template v-else-if="warning">
-        <span class="message-warning">
-          {{ warning_message }}
+          {{ required ? warningMessage : errorText }}
         </span>
       </template>
     </div>
@@ -36,8 +32,6 @@
 <script>
 export default {
   name: 'Textarea',
-  //props 'warning_message', 'error_message' contain text alert message,
-  // props error, warning are created for test and contain state field
   props: {
     placeholder: {
       type: String,
@@ -55,6 +49,14 @@ export default {
       type: String,
       default: ''
     },
+    description: {
+      type: String,
+      default: ''
+    },
+    defaultText: {
+      type: String,
+      default: ''
+    },
     limits: {
       type: Object,
       default() {
@@ -65,26 +67,49 @@ export default {
       type: Boolean,
       default: false
     },
-    warning_message: {
+    validate: {
       type: String,
-      default: 'Pay attention to this field'
+      default: ''
     },
-    error_message: {
-      type: String,
-      default: 'this field is not filled correctly'
-    },
-    warning: {
+    required: {
       type: Boolean,
       default: false
     },
-    error: {
+    elementId: {
+      type: Number,
+      default: null
+    },
+    certId: {
+      type: Number,
+      default: null
+    },
+    warningMessage: {
+      type: String,
+      default: 'This field is required'
+    },
+    errorText: {
+      type: String,
+      default: 'Please enter a valid value'
+    },
+    warning: {
       type: Boolean,
       default: false
     }
   },
   data() {
     return {
-      value: ''
+      error: false,
+      value: '',
+      pattern: {
+        email: /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i,
+        string: /./,
+        numeric: /^-?\d*(\.\d+)?$/,
+        float: /^-?(0\.\d+|[1-9]+[0-9]*\.\d+)$/,
+        integer: /^\d+$/,
+        ip: /((^\s*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$))/,
+        ipv4: /^(?:(?:^|\.)(?:2(?:5[0-5]|[0-4]\d)|1?\d?\d)){4}$/,
+        ipv6: /(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))/
+      }
     }
   },
   watch: {
@@ -105,9 +130,74 @@ export default {
     }
   },
   mounted() {
-    this.value = this.computed_value
+    if (!this.defaultText) {
+      this.value = this.computed_value
+    }
+    if (this.certId) {
+      this.value = this.computed_value
+    } else if (!this.certId && this.defaultText.length) {
+      if (this.computed_value.length) {
+        this.value = this.computed_value
+      } else {
+        this.value = this.defaultText
+      }
+    }
+    this.validation()
   },
-  methods: {}
+  methods: {
+    validation() {
+      const error = {
+        id: this.elementId !== null ? this.elementId : this._uid,
+        status: false
+      }
+      if (!_.isNull(this.value)) {
+        if (!this.value.trim() && this.required) {
+          this.errorRequired(true)
+        } else {
+          this.error = false
+          this.$emit('validationError', error)
+        }
+        if (this.value.length && this.validate && this.pattern[this.validate]) {
+          const result = this.pattern[this.validate].test(this.value)
+          if (!result) {
+            if (this.error === false) {
+              this.error = true
+              error.status = true
+              this.$emit('validationError', error)
+            }
+          } else {
+            this.error = false
+            this.$emit('validationError', error)
+          }
+        }
+      }
+    },
+    errorRequired(isError) {
+      if (this.required) {
+        const error = {
+          id: this.elementId || this._uid,
+          status: isError
+        }
+        this.error = isError
+        this.$emit('validationError', error)
+      }
+    },
+    getValidationError() {
+      const error = {
+        id: this.elementId !== null ? this.elementId : this._uid,
+        status: false
+      }
+      if (!this.value.length) {
+        this.error = true
+        error.status = true
+        this.$emit('validationError', error)
+      } else {
+        this.error = false
+        error.status = false
+        this.$emit('validationError', error)
+      }
+    }
+  }
 }
 </script>
 

@@ -2,7 +2,6 @@
   <div class="dashboard">
     <div class="dashboard__block">
       <a
-        href="/settings"
         class="dashboard__block__image">
         <img
           src="/error.png"
@@ -28,8 +27,9 @@ export default {
 .dashboard {
   display: flex;
   justify-content: center;
-  height: 100vh;
+  height: calc(100vh - 95px);
   margin-top: -15px;
+
   &__block {
     background: #fff;
     box-sizing: border-box;
@@ -50,7 +50,7 @@ export default {
     }
   }
 }
-@include mq($max-width: 500px) {
+@media (max-width: 500px) {
   .dashboard {
     background: #eef1f5;
     .dashboard__block {

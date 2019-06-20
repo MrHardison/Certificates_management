@@ -2,7 +2,6 @@
   <div>
     <div>
       <div
-        v-if="image"
         class="image-loader">
         <div
           v-if="isLoading"
@@ -10,6 +9,7 @@
           <spinner-loader />
         </div>
         <img
+          v-if="image"
           :src="imageUrl"
           class="img-fluid">
       </div>
@@ -19,6 +19,9 @@
         type="file"
         @change="createImage">
     </div>
+    <div
+      v-if="error && required"
+      class="error-message">This field is required</div>
     <button-rounded
       v-if="!image"
       class="btn-md btn-green rounded bold medium"
@@ -28,19 +31,21 @@
       </span>
       <fa
         :icon="['fa', 'trash']"
-        class="ml-4"/>
+        class="ml-2"/>
     </button-rounded>
     <div
       v-else
       class="image_isset">
       <button-rounded
-        class="btn-smoke rounded bold floated-icon medium clear_signature"
+        class="btn-smoke rounded bold medium clear_signature responsive"
         style="margin: 1.25rem 0;"
         @click.native="removeImage">
         <span class="text">
           Remove
         </span>
-        <fa :icon="['fa', 'trash']"/>
+        <fa
+          :icon="['fa', 'trash']"
+          class="ml-4" />
       </button-rounded>
     </div>
   </div>
@@ -55,23 +60,34 @@ export default {
   name: 'ImageLoader',
   components: { ButtonRounded, SpinnerLoader },
   props: {
+    elementId: {
+      type: Number,
+      default: null
+    },
     parent_image: {
       type: String,
       default: ''
+    },
+    required: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
       imageUrl: '',
       image: false,
-      isLoading: true
+      isLoading: false,
+      error: false
     }
   },
   mounted() {
-    if (this.parent_image && this.parent_image.length > 0) {
+    if (this.parent_image && this.parent_image.length) {
       this.isLoading = true
       this.image = true
       this.getImageByUrl(this.parent_image)
+    } else if (!this.parent_image) {
+      this.errorRequired(true)
     }
   },
   methods: {
@@ -85,36 +101,46 @@ export default {
     uploadImage(img) {
       this.image = true
       this.isLoading = true
-      this.$api()
-        .upload.upload(img)
-        .then(res => {
-          if (res.data) {
-            this.getImageByUrl(res.data)
-          }
-        })
+      this.$api.upload.upload(img).then(res => {
+        if (res.data) {
+          this.getImageByUrl(res.data)
+        }
+      })
     },
     getImageByUrl(url) {
-      this.$api()
-        .upload.getImageByUrl(url)
-        .then(res => {
-          this.imageUrl = URL.createObjectURL(res)
-          this.$emit('update', url)
-          this.isLoading = false
-        })
+      this.$api.upload.getImageByUrl(url).then(res => {
+        this.imageUrl = URL.createObjectURL(res)
+        this.$emit('update', url)
+        this.isLoading = false
+        this.errorRequired(false)
+      })
     },
     removeImage() {
+      this.$refs.imageForm.value = ''
       this.image = false
       this.imageUrl = ''
       this.$emit('update', this.imageUrl)
+      this.errorRequired(true)
+    },
+    errorRequired(isError) {
+      if (this.required) {
+        const error = {
+          id: this.elementId || this._uid,
+          status: isError
+        }
+        this.error = isError
+        this.$emit('validationError', error)
+      }
     }
   }
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .image-loader {
-  min-height: 210px;
   border: 1px solid #cfd4dd;
+  margin-bottom: 1rem;
+  min-height: 210px;
   position: relative;
 
   .content-loading {
@@ -140,7 +166,20 @@ export default {
   display: none;
 }
 
-@include mq($max-width: 425px) {
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 0.5rem;
+}
+@media (max-width: 544px) {
+  .image-loader {
+    min-height: 130px;
+  }
+  .image_isset {
+    .btn {
+      width: 100%;
+    }
+  }
   .image {
     text-align: center;
   }

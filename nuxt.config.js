@@ -1,5 +1,8 @@
 const pkg = require('./package')
 const webpack = require('webpack')
+require('dotenv').config()
+
+console.log(process.env.BASE_URL)
 
 module.exports = {
   server: {
@@ -56,10 +59,12 @@ module.exports = {
     '~/plugins/vue-async-computed',
     '~/plugins/lodash',
     '~/plugins/order',
+    '~/plugins/find',
     '~/plugins/timezone',
     '~/plugins/api',
-    { src: '~/plugins/localStorage.js', ssr: false },
-    { src: '~/plugins/notifications', ssr: false }
+    { src: '~/plugins/localStorage', ssr: false },
+    { src: '~/plugins/notifications', ssr: false },
+    { src: '~/plugins/dateTime', ssr: false }
   ],
 
   /*
@@ -68,13 +73,16 @@ module.exports = {
   modules: [
     // Doc: https://github.com/nuxt-community/axios-module#usage
     '@nuxtjs/axios',
+
+    '@nuxtjs/sentry',
     // Doc: https://bootstrap-vue.js.org/docs/
     'bootstrap-vue/nuxt',
+
     // Global scss
-    [
-      'nuxt-sass-resources-loader',
-      ['@/assets/scss/ui_colors.scss', 'sass-mediaqueries/_media-queries.scss']
-    ],
+    '@nuxtjs/style-resources',
+
+    ['@nuxtjs/dotenv', { systemvars: true }],
+
     // Using FontAwesome as module
     [
       'nuxt-fontawesome',
@@ -101,12 +109,38 @@ module.exports = {
       }
     ]
   ],
+
   /*
   ** Axios module configuration
   */
   axios: {
-    baseURL:
-      'https://swfy-weworktogethersoftware-staging.eks.swfy.co.uk/api/v3/web'
+    // baseURL: process.env.BASE_URL || 'https://swfy-weworktogethersoftware-staging.eks.swfy.co.uk/api/v3/web'
+  },
+
+  env: {
+    domains: {
+      default:
+        'https://swfy-weworktogethersoftware-staging.eks.swfy.co.uk/api/v3/web',
+      'https://app.weworktogethersoftware.com':
+        'https://api.weworktogethersoftware.com/api/v3/web',
+      'https://swfy-wwt-web-app.eks.swfy.co.uk': 
+        'https://api.weworktogethersoftware.com/api/v3/web',
+      'http://localhost:5000':
+        'https://swfy-weworktogethersoftware-staging.eks.swfy.co.uk/api/v3/web',
+    }
+  },
+
+  sentry: {
+    dsn: process.env.SENTRY_DSN,
+    config: {
+      release: process.env.RELEASE,
+      publishRelease: true
+    }
+  },
+
+  // Styles
+  styleResources: {
+    scss: ['@/assets/scss/ui_colors.scss'] // alternative: scss
   },
 
   /*

@@ -118,10 +118,11 @@ export default {
       return find
     },
     setFormCategoryChecks(id, item) {
-      const find = this.checkedFormCategories[id]
-      if (!find) {
-        this.checkedFormCategories[id] = item
-      }
+      // const find = this.checkedFormCategories[id]
+      // if (!find) {
+      //   this.checkedFormCategories[id] = item
+      // }
+      this.checkedFormCategories[id] = item
       this.$emit('updateFormCategories', this.checkedFormCategories)
     },
     getFormChecks(id) {
@@ -148,10 +149,10 @@ export default {
       return find
     },
     setFormChecks(id, item) {
-      const find = this.checkedForms[id]
-      if (!find) {
-        this.checkedForms[id] = item
-      }
+      // const find = this.checkedForms[id]
+      // if (!find) {
+      // }
+      this.checkedForms[id] = item
       this.$emit('updateForms', this.checkedForms)
     }
   }

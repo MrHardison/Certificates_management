@@ -37,9 +37,10 @@
                 @update="user.password_confirmation = $event"/>
             </div>
           </div>
-          <div class="card-footer d-flex justify-content-end">
+          <div class="card-footer d-flex justify-content-end pr-0">
             <button-rounded
-              class="btn-green rounded small mr-2"
+              :preloading="preloading"
+              class="btn-green rounded small"
               @click.native="createUser">
               Create
             </button-rounded>
@@ -69,19 +70,24 @@ export default {
         },
         password: '',
         password_confirmation: ''
-      }
+      },
+      preloading: false
     }
   },
   methods: {
     createUser() {
-      this.$api()
-        .users.create(this.user)
-        .then(res => {
+      if (!this.preloading) {
+        this.preloading = true
+        this.$api.users.create(this.user).then(res => {
+          _.delay(() => {
+            this.preloading = false
+          }, 1000)
           this.$router.push({
             name: 'roles-and-permissions-users-:id',
             params: { id: res.data.data.id }
           })
         })
+      }
     }
   }
 }

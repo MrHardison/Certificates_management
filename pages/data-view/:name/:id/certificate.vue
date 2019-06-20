@@ -30,12 +30,11 @@ export default {
     }
   },
   mounted() {
+    this.$emit('showReturnButton')
     if (this.dataViewCertificate === null) {
-      this.$api()
-        .dataView.getById(this.$route.params.id)
-        .then(res => {
-          this.render(res.certificate.id)
-        })
+      this.$api.dataView.getById(this.$route.params.id).then(res => {
+        this.render(res.certificate.id)
+      })
     } else {
       this.render(this.dataViewCertificate.id)
     }
@@ -43,8 +42,8 @@ export default {
   methods: {
     render(id) {
       this.isLoading = true
-      this.$api()
-        .dataView.render(id)
+      this.$api.dataView
+        .render(id)
         .then(res => {
           let blob = new Blob([res.data], { type: 'application/pdf' })
           this.pdfUrl = URL.createObjectURL(blob)
@@ -65,6 +64,7 @@ export default {
   align-items: center;
   justify-content: center;
 }
+object,
 iframe {
   display: block;
   height: 80vh;

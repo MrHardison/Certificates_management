@@ -52,16 +52,15 @@
             @update="password_confirmation = $event"/>
 
           <div class="form-group">
-            <button
+            <button-rounded
+              :preloading="preloading"
               class="btn btn-md btn-green rounded bold"
-              @click.prevent="register">
-              <div class="content">
-                GET STARTED
-                <fa
-                  :icon="['fa', 'angle-right']"
-                  class="icon"/>
-              </div>
-            </button>
+              @click.prevent.native="register">
+              Get started
+              <fa
+                :icon="['fa', 'angle-right']"
+                class="ml-2"/>
+            </button-rounded>
           </div>
           <div class="footer">
             <nuxt-link
@@ -97,10 +96,12 @@
 
 <script>
 import InputTransparent from '~/components/inputTransparent/inputTransparent'
+import ButtonRounded from '~/components/buttonRounded'
 import { mapMutations } from 'vuex'
+
 export default {
   name: 'Register',
-  components: { InputTransparent },
+  components: { InputTransparent, ButtonRounded },
   layout: 'minimal',
   middleware: 'auth',
 
@@ -108,28 +109,35 @@ export default {
     return {
       email: '',
       password: '',
-      password_confirmation: ''
+      password_confirmation: '',
+      preloading: false
     }
   },
 
   methods: {
     ...mapMutations({ setToken: 'token/setToken' }),
     register() {
-      this.$api()
-        .auth.register({
-          email: this.email,
-          password: this.password,
-          password_confirmation: this.password_confirmation
-        })
-        .then(res => {
-          if (res && res.accessToken) {
-            this.setToken(res.accessToken)
-            this.$router.push('/')
-          }
-        })
-        .catch(err => {
-          console.log('Error detected, please contact the administrator')
-        })
+      if (!this.preloading) {
+        this.preloading = true
+        this.$api.auth
+          .register({
+            email: this.email,
+            password: this.password,
+            password_confirmation: this.password_confirmation
+          })
+          .then(res => {
+            _.delay(() => {
+              this.preloading = false
+            }, 1000)
+            if (res && res.accessToken) {
+              this.setToken(res.accessToken)
+              this.$router.push('/')
+            }
+          })
+          .catch(err => {
+            console.warn('Error detected, please contact the administrator')
+          })
+      }
     }
   }
 }
@@ -473,6 +481,10 @@ export default {
 
         .form {
           padding: 25px 40px;
+
+          .register {
+            margin-bottom: 20px;
+          }
         }
       }
     }
