@@ -116,4 +116,45 @@
       }
     }
   }
+
+  &.lookup {
+    .control-body {
+      position: relative;
+
+      .form-control {
+        background: #f7f7f7;
+        border: 0;
+        border-radius: 2px;
+        cursor: pointer;
+        display: flex;
+        margin: 0 auto;
+        padding: 0 2rem;
+        position: relative;
+      }
+      .input-icon {
+        color: #055EA8;
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 15px;
+      }
+      &::after {
+        background: #055EA8;
+        bottom: 0;
+        content: '';
+        height: 2px;
+        left: 0;
+        position: absolute;
+        width: 100%;
+      }
+    }
+    &.filled {
+      .control-body {
+        &::after {
+          background: #3ABA00;
+        }
+      }
+    }
+  }
 }

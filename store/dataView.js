@@ -1,17 +1,28 @@
+/* eslint-disable prettier/prettier */
 export const state = () => ({
-  certificate: {},
   form: {},
   sectionsStatus: [],
   oldLookupSelectedOptions: {}
 })
 
-export const mutations = {
-  setCertificate(state, data) {
-    state.certificate = data
+export const getters = {
+  form: state => state.form,
+  formSectionById: state => id => state.form.sections.find(s => s.id === id),
+
+  getSectionsStatus(state) {
+    return state.sectionsStatus
   },
+  getOldLookupSelectedOptions(state) {
+    return state.oldLookupSelectedOptions
+  }
+}
+
+export const mutations = {
   setForm(state, data) {
+    data.sections = this.$order(data.sections)
     state.form = data
   },
+
   setSectionsStatus(state, data) {
     state.sectionsStatus = data
   },
@@ -23,17 +34,4 @@ export const mutations = {
   }
 }
 
-export const getters = {
-  certificate(state) {
-    return state.certificate
-  },
-  form(state) {
-    return state.form
-  },
-  getSectionsStatus(state) {
-    return state.sectionsStatus
-  },
-  getOldLookupSelectedOptions(state) {
-    return state.oldLookupSelectedOptions
-  }
-}
+export const actions = {}

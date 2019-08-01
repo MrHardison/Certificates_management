@@ -144,6 +144,7 @@ export default {
     '$route.name': {
       handler() {
         this.getRecordGroups()
+        this.params.search_text = ''
       }
     }
   },

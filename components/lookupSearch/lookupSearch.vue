@@ -1,10 +1,11 @@
 <template>
   <div>
     <input-standard
-      :disabled="true"
-      :computed_value="getCertificateElementData"
+      :computed_value="selectedLookupTitle"
       :search_icon="true"
-      class="left-icon"
+      :clear="false"
+      :class="{filled: selectedLookupTitle.length}"
+      class="lookup"
       @click.native="showLookupModal = true" />
     <div
       v-if="error"
@@ -17,11 +18,10 @@
         <lookup-selector
           :options="recordLookups"
           :is-loading="isLoading"
-          :default-selected="getLookupItem"
+          :default-selected="selectedLookup"
           @searchText="searchText = $event"
-          @getLookupData="getDataListDefaults"
           @deleteCustomLookup="deleteCustomLookup($event)"
-          @update="selectItem($event)"/>
+          @update="selectItem($event)" />
       </div>
       <div
         slot="footer"
@@ -41,7 +41,7 @@
       header="Warning"
       @close="needToSelectParentModal = false">
       <template slot="body">
-        Please select {{ dataListDefaultName }}
+        Please select {{ parentElement.data }}
       </template>
       <div
         slot="footer"
@@ -80,10 +80,11 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import VModal from '~/components/vModal/vModal'
 import ButtonRounded from '~/components/buttonRounded/'
 import InputStandard from '~/components/inputStandard/'
-import lookupSelector from '~/components/lookupSelector'
+import lookupSelector from './lookupSelector'
 
 export default {
   name: 'LookupSearch',
@@ -94,41 +95,25 @@ export default {
     ButtonRounded
   },
   props: {
-    name: {
-      type: String,
-      default: ''
+    parentElement: {
+      type: Object,
+      default() {
+        return {}
+      }
     },
-    elementId: {
-      type: Number,
-      default: null
+    selectedLookup: {
+      type: Object,
+      default() {
+        return {}
+      }
     },
-    elDataListDefaultId: {
-      type: Number,
-      default: null
-    },
-    elDataListGroupId: {
-      type: Number,
-      default: null
-    },
-    formSectionId: {
+    dataListDefaultId: {
       type: Number,
       default: null
     },
     message: {
       type: String,
       default: ''
-    },
-    formSectionElements: {
-      type: Array,
-      default() {
-        return []
-      }
-    },
-    certificateElements: {
-      type: Array,
-      default() {
-        return []
-      }
     },
     required: {
       type: Boolean,
@@ -138,19 +123,20 @@ export default {
   data() {
     return {
       searchText: '',
-      selectedItemId: null,
-      selectedItemType: null,
-      selectedItemData: null,
+      selectedItem: {
+        id: null,
+        record_lookup_type: null,
+        data: null,
+        title: null
+      },
       showLookupModal: false,
       needToSelectParentModal: false,
       deleteLookupModal: false,
       itemToDelete: {},
-      dataListDefaultName: null,
       dropdownOptions: [],
-      dataListDefaults: null,
       recordLookups: [],
       params: {
-        data_list_default_id: this.elDataListDefaultId,
+        data_list_default_id: this.dataListDefaultId,
         page: 1,
         last_page: null,
         search_text: '',
@@ -159,10 +145,11 @@ export default {
         record_lookup_type: null
       },
       createLookupParams: {
-        data_list_default_id: this.elDataListDefaultId,
+        data_list_default_id: this.dataListDefaultId,
         record_lookup_id: null,
-        record_lookup_type: 'system',
-        data: ''
+        record_lookup_type: 'custom',
+        data: '',
+        title: ''
       },
       isLoading: false,
       preloading: false,
@@ -171,97 +158,59 @@ export default {
     }
   },
   computed: {
-    getCertificateElementData() {
-      const element = _.find(this.certificateElements, {
-        form_section_element_id: this.elementId
-      })
-      return element.data
-    },
-    getLookupItem() {
-      return _.find(this.recordLookups, {
-        data: this.getCertificateElementData
-      })
-    },
-    getCertificateParentElement() {
-      const formElement = _.find(this.formSectionElements, {
-        id: this.elementId
-      })
-      if (formElement.form_section_element_id !== 0) {
-        const parentFormElement = _.find(this.formSectionElements, {
-          id: formElement.form_section_element_id
-        })
-        const parentCertificateElement = _.find(this.certificateElements, {
-          form_section_element_id: parentFormElement.id
-        })
-        return parentCertificateElement
+    ...mapGetters({ getDataListDefaults: 'dataListItems/getDataListDefaults' }),
+    selectedLookupTitle() {
+      let title = ''
+      const system = this.selectedLookup.record_lookups_system
+      const custom = this.selectedLookup.record_lookups_custom
+      if (system.length) {
+        title = system[0].title
+      } else if (custom.length) {
+        title = custom[0].title
       }
-    },
-    getListItem() {
-      if (this.selectedItem !== null) {
-        return _.find(this.recordLookups.data, {
-          data: this.dropdownOptions[this.selectedItem]
-        })
+      return title
+    }
+  },
+  watch: {
+    showLookupModal: {
+      handler(data) {
+        if (this.parentElement.hasOwnProperty('id')) {
+          if (data) {
+            if (this.parentElement.data.length) {
+              // eslint-disable-next-line
+              const systemId = this.parentElement.record_lookups_system[0] && this.parentElement.record_lookups_system[0].id
+              // eslint-disable-next-line
+              const customId = this.parentElement.record_lookups_custom[0] && this.parentElement.record_lookups_custom[0].id
+              this.createLookupParams.record_lookup_id = systemId || customId
+              this.params.record_lookup_id = systemId || customId
+              this.params.record_lookup_type = systemId ? 'system' : 'custom'
+
+              this.getRecordLookups()
+            } else {
+              this.closeLookupModal()
+              this.needToSelectParentModal = true
+            }
+          } else {
+            this.recordLookups = []
+          }
+        }
       }
     }
   },
   mounted() {
-    if (!this.getCertificateElementData.length) {
+    if (!this.parentElement.hasOwnProperty('id')) {
+      this.getRecordLookups()
+    }
+    if (!this.selectedLookup.data.length) {
       this.errorRequired(true)
     } else {
       this.errorRequired(false)
     }
   },
   methods: {
-    getDataListDefaults() {
-      this.isLoading = true
-      this.recordLookups = []
-      this.$api.dataListDefaults
-        .getDataListDefaults()
-        .then(res => {
-          this.dataListDefaults = res
-        })
-        .finally(() => {
-          this.prepareData()
-        })
-    },
-    prepareData() {
-      const fElement = _.find(this.formSectionElements, {
-        id: this.elementId
-      })
-      if (
-        fElement.form_section_element_id === 0 ||
-        fElement.form_section_element_id === null
-      ) {
-        this.getRecordLookups()
-      } else {
-        const parentFormElement = _.find(this.formSectionElements, {
-          id: fElement.form_section_element_id
-        })
-        const parentCertificateElement = _.find(this.certificateElements, {
-          form_section_element_id: parentFormElement.id
-        })
-        this.dataListDefaultName = parentFormElement.name
-        if (parentCertificateElement.data) {
-          let systemId = null
-          let customId = null
-          parentCertificateElement.record_lookups_custom.forEach(item => {
-            customId = item.id
-          })
-          parentCertificateElement.record_lookups_system.forEach(item => {
-            systemId = item.id
-          })
-          this.createLookupParams.record_lookup_id = systemId || customId
-          this.params.record_lookup_id = systemId || customId
-          this.params.record_lookup_type = systemId ? 'system' : 'custom'
-          this.getRecordLookups()
-        } else {
-          this.needToSelectParentModal = true
-          this.closeLookupModal()
-        }
-      }
-    },
     getRecordLookups() {
       this.isLoading = true
+      this.recordLookups = []
       this.$api.recordLookups
         .getRecordLookups(this.params)
         .then(res => {
@@ -279,37 +228,18 @@ export default {
           this.isLoading = false
         })
     },
-    getParentElementData(id) {
-      const parentElement = _.find(this.formSectionElements, {
-        data_list_default_id: id
-      })
-      return _.find(this.certificateElements, {
-        form_section_element_id: parentElement.id
-      })
-    },
     selectItem(item) {
-      this.selectedItemId = item.id
-      this.selectedItemType = item.record_lookup_type
-      this.selectedItemData = item.data
-      this.setData()
+      this.selectedItem = item
       this.errorRequired(false)
-    },
-    setData() {
       this.closeLookupModal()
-      const childData = {
-        dataListDefaultId: this.elDataListDefaultId,
-        formSectionId: this.formSectionId
-      }
+
       const data = {
-        elementId: this.elementId,
-        data: this.selectedItemData,
-        id: [this.selectedItemId],
-        type: [this.selectedItemType]
+        data: item.data,
+        title: item.title,
+        id: [item.id],
+        type: [item.record_lookup_type]
       }
-      this.$emit('setLookupData', {
-        setLookupData: data,
-        updateChildData: childData
-      })
+      this.$emit('setData', data)
     },
     closeLookupModal() {
       this.searchText = ''
@@ -319,19 +249,14 @@ export default {
     createCustomLookup() {
       if (!this.preloading) {
         this.preloading = true
+        this.createLookupParams.title = this.searchText
         this.createLookupParams.data = this.searchText
         if (this.createLookupParams.record_lookup_id) {
-          const parentSystemLookup = _.find(
-            this.getCertificateParentElement.record_lookups_system,
-            {}
-          )
-          const parentCustomLookup = _.find(
-            this.getCertificateParentElement.record_lookups_custom,
-            {}
-          )
-          if (parentSystemLookup) {
+          const custom = this.parentElement.record_lookups_custom
+          const system = this.parentElement.record_lookups_system
+          if (system.length) {
             this.createLookupParams.record_lookup_type = 'system'
-          } else if (parentCustomLookup) {
+          } else if (custom.length) {
             this.createLookupParams.record_lookup_type = 'custom'
           }
         }

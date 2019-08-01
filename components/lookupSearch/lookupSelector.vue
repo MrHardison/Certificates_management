@@ -32,7 +32,7 @@
             <div
               class="option-container"
               @click="selectOption(option)">
-              {{ getOptionView(option) }}
+              {{ option.title }}
             </div>
             <div
               v-if="option.record_type === 'custom' && option.id !== defaultSelected.id"
@@ -45,7 +45,7 @@
           </li>
         </template>
         <li
-          v-if="lookupOptions.length === 0"
+          v-if="!lookupOptions.length"
           class="option active">
           <div class="option-container">
             Not found
@@ -92,27 +92,34 @@ export default {
   computed: {
     lookupOptions() {
       return _.orderBy(
-        _.filter(this.options, item => {
-          return (
-            item.data.toLowerCase().indexOf(this.inputText.toLowerCase()) > -1
-          )
-        }),
+        this.options.filter(
+          i => i.data.toLowerCase().indexOf(this.inputText.toLowerCase()) > -1
+        ),
         'data'
       )
     }
   },
   mounted() {
-    this.$emit('getLookupData')
-    this.selectedItemId = this.defaultSelected.id
-    this.selectedItemType = this.defaultSelected.record_lookup_type
+    const system = this.defaultSelected.record_lookups_system
+    const custom = this.defaultSelected.record_lookups_custom
+    if (system.length) {
+      this.selectedItemType = 'system'
+      this.selectedItemId = system[0].id
+    } else if (custom.length) {
+      this.selectedItemType = 'custom'
+      this.selectedItemId = custom[0].id
+    }
   },
   methods: {
     getOptionView(option) {
       if (typeof option === 'string' || typeof option === 'number') {
         return option
-      } else if (typeof option === 'object' && option.hasOwnProperty('data')) {
-        return option.data
-      } else if (typeof option === 'object' && !option.hasOwnProperty('data')) {
+      } else if (typeof option === 'object' && option.hasOwnProperty('title')) {
+        return option.title
+      } else if (
+        typeof option === 'object' &&
+        !option.hasOwnProperty('title')
+      ) {
         return `Empty title - ${this.options.indexOf(option)}`
       }
     },
@@ -134,5 +141,5 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import './lookupSelector';
+@import './lookupSelector.scss';
 </style>

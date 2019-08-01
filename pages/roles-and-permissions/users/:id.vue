@@ -31,7 +31,7 @@
                   :key="role.id"
                   class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-3">
                   <checkbox
-                    :default-checked="userRoles[role.id]"
+                    :data="userRoles[role.id]"
                     :label="role.name"
                     @change="userRoles[role.id] = $event"/>
                 </div>

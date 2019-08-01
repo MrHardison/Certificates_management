@@ -12,7 +12,7 @@
         :maxlength="limits.max ? parseInt(limits.max) : 200"
         v-model="value"
         class="form-control"
-        @blur="validation" />
+        @blur="errorsCheck" />
       <template v-if="limits && limits.hasOwnProperty('max')">
         <span class="limits">
           <span class="current">{{ value != null ? value.length : 0 }}</span>
@@ -79,6 +79,10 @@ export default {
       type: Number,
       default: null
     },
+    fieldName: {
+      type: String,
+      default: ''
+    },
     certId: {
       type: Number,
       default: null
@@ -116,7 +120,7 @@ export default {
     value: {
       deep: true,
       handler(data) {
-        if (data == null) {
+        if (data === null) {
           data = ''
         }
         this.$emit('update', data)
@@ -125,7 +129,9 @@ export default {
     computed_value: {
       deep: true,
       handler(data) {
-        this.value = data
+        if (data.length) {
+          this.value = data
+        }
       }
     }
   },
@@ -134,7 +140,11 @@ export default {
       this.value = this.computed_value
     }
     if (this.certId) {
-      this.value = this.computed_value
+      if (this.computed_value === this.defaultText) {
+        this.value = ''
+      } else {
+        this.value = this.computed_value
+      }
     } else if (!this.certId && this.defaultText.length) {
       if (this.computed_value.length) {
         this.value = this.computed_value
@@ -145,6 +155,20 @@ export default {
     this.validation()
   },
   methods: {
+    errorsCheck() {
+      this.validation()
+      setTimeout(() => {
+        if (this.error) {
+          this.$alerts({
+            group: 'alerts',
+            type: 'error',
+            title: this.fieldName,
+            text: this.required ? this.warningMessage : this.errorText,
+            duration: 1000
+          })
+        }
+      }, 0)
+    },
     validation() {
       const error = {
         id: this.elementId !== null ? this.elementId : this._uid,

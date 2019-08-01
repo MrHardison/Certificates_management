@@ -2,32 +2,47 @@
   <div class="create-modal">
     <div
       class="create-body">
-      <template
-        v-if="!isLoading">
-        <div class="row">
-          <template v-if="dataGroup">
-            <template v-for="(element, index) in $orderObject(dataGroup.schema)">
-              <div
-                v-if="element.field_type === 1"
-                :key="index"
-                class="col-md-12">
-                <template v-if="element.field_type === 1">
-                  <input-standard
-                    :label="element.element_label"
-                    :placeholder="element.element_label"
-                    :limits="element.hasOwnProperty('limits') && element.limits.hasOwnProperty('char') ? element.limits.char : {}"
-                    :computed_value="recordGroup[index]"
-                    @update="recordGroup[index] = $event"/>
-                </template>
-              </div>
-            </template>
+      <div class="row">
+        <template v-if="dataGroup">
+          <template v-for="(element, index) in $orderObject(dataGroup.schema)">
+            <div
+              :key="index"
+              class="col-md-12 mb-3">
+              <template v-if="element.field_type === 1">
+                <label class="label">{{ element.description || element.element_label || element.field_name }}</label>
+                <input-standard
+                  :placeholder="element.element_label"
+                  :limits="element.hasOwnProperty('limits') && element.limits.hasOwnProperty('char') ? element.limits.char : {}"
+                  :computed_value="customRecordGroup[index]"
+                  @update="customRecordGroup[index] = $event"/>
+              </template>
+              <!-- <template v-else-if="element.field_type === 4">
+                <label class="label">{{ element.description || element.element_label || element.field_name }}</label>
+                <lookup-search
+                  :name="element.field_name"
+                  :record-groups="singleLookupParams.recordGroups"
+                  :computed-value="customRecordGroup[index]"
+                  :required="element.required"
+                  :el-data-list-default-id="+element.data_list_default"
+                  :form-section-id="singleLookupParams.formSectionId"
+                  :form-section-elements="singleLookupParams.formSectionElements"
+                  :certificate-elements="singleLookupParams.certificateElements"
+                  @validationError="$emit('validationError', $event)"
+                  @setLookupData="setData(index, $event)"
+                  @updateChildData="$emit('updateChildData', $event)"/>
+              </template> -->
+              <template v-else-if="element.field_type === 6">
+                <label class="label">{{ element.description || element.element_label }}</label>
+                <vRadio
+                  :name="`${element.field_name}_${element.element_label}`"
+                  :options="element.options"
+                  :required="element.required"
+                  @change="customRecordGroup[index] = $event"
+                  @validationError="$emit('validationError', $event)"/>
+              </template>
+            </div>
           </template>
-        </div>
-      </template>
-      <div
-        v-if="isLoading"
-        class="content-loading">
-        <spinner-loader />
+        </template>
       </div>
     </div>
     <div class="create-footer">
@@ -53,11 +68,18 @@
 import ButtonRounded from '~/components/buttonRounded'
 import InputStandard from '~/components/inputStandard'
 import Dropdown from '~/components/dropdown'
-import SpinnerLoader from '~/components/spinerLoader'
+import lookupSearch from '~/components/lookupSearch'
+import vRadio from '~/components/vRadio/vRadio'
 
 export default {
   name: 'DataGroupCreate',
-  components: { InputStandard, ButtonRounded, SpinnerLoader, Dropdown },
+  components: {
+    InputStandard,
+    ButtonRounded,
+    Dropdown,
+    vRadio,
+    lookupSearch
+  },
   props: {
     dataListGroupId: {
       type: Number,
@@ -66,13 +88,23 @@ export default {
     parentRecordGroupId: {
       type: Number,
       default: null
+    },
+    singleLookupParams: {
+      type: Object,
+      default() {
+        return {}
+      }
+    },
+    dataGroup: {
+      type: Object,
+      default() {
+        return {}
+      }
     }
   },
   data() {
     return {
-      isLoading: true,
-      recordGroup: {},
-      dataGroup: [],
+      customRecordGroup: {},
       params: {
         data_list_group_id: null,
         page: 1,
@@ -81,27 +113,10 @@ export default {
       preloading: false
     }
   },
-  // asyncComputed: {
-  //   dataGroup() {
-  //     if (!this.dataGroupId) {
-  //       return null
-  //     }
-  //     return this.$api.dataGroups.getById(this.dataGroupId).then(res => {
-  //       this.isLoading = false
-  //       return res
-  //     })
-  //   }
-  // },
   mounted() {
-    this.$api.dataGroups
-      .getById(this.dataListGroupId)
-      .then(res => {
-        this.dataGroup = res
-        this.params.data_list_group_id = res.data_list_group_id
-      })
-      .finally(() => {
-        this.isLoading = false
-      })
+    _.forEach(_.keys(this.dataGroup.schema), item => {
+      this.customRecordGroup[item] = ''
+    })
   },
   methods: {
     addRecordGroup(dataListGroupId) {
@@ -111,7 +126,7 @@ export default {
           .add({
             record_group_id: this.parentRecordGroupId,
             data_list_group_id: this.dataListGroupId,
-            data: this.recordGroup,
+            data: this.customRecordGroup,
             deleted_at: null
           })
           .then(res => {

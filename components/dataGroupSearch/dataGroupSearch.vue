@@ -38,7 +38,7 @@
                   class="modal-list-datagroup">
                   <div
                     class="modal-list-datagroup-item"
-                    @click="setData(item)">
+                    @click="setRecordGroup(item)">
                     {{ renderData(item) }}
                   </div>
                   <fa
@@ -64,8 +64,9 @@
         <data-group-create
           :key="dataListGroupId"
           :data-list-group-id="dataListGroupId"
+          :data-group="dataGroup"
           :parent-record-group-id="parentRecordGroupId"
-          @setRecordGroup="setData($event)"
+          @setRecordGroup="setRecordGroup($event)"
           @close="updateList"/>
       </template>
       <div
@@ -110,14 +111,14 @@
         slot="footer"
         class="d-flex w-100 justify-content-between">
         <button-rounded
-          class="btn-smoke rounded small"
-          @click.native="confirmDelete = false">
-          Close
-        </button-rounded>
-        <button-rounded
           class="btn-green rounded small"
           @click.native="deleteRecordGroup(false)">
           Delete
+        </button-rounded>
+        <button-rounded
+          class="btn-smoke rounded small"
+          @click.native="confirmDelete = false">
+          Close
         </button-rounded>
       </div>
     </v-modal>
@@ -125,12 +126,12 @@
 </template>
 
 <script>
-import VModal from '~/components/vModal/vModal'
-import ButtonRounded from '~/components/buttonRounded/buttonRounded'
-import VFooter from '~/components/table/vFooter'
-import InputStandard from '~/components/inputStandard/inputStandard'
-import DataGroupCreate from '~/components/dataGroupSearch/dataGroupCreate'
 import { mapGetters } from 'vuex'
+import DataGroupCreate from '~/components/dataGroupSearch/dataGroupCreate'
+import VFooter from '~/components/table/vFooter'
+import ButtonRounded from '~/components/buttonRounded/buttonRounded'
+import VModal from '~/components/vModal/vModal'
+import InputStandard from '~/components/inputStandard/inputStandard'
 import SpinnerLoader from '~/components/spinerLoader'
 
 export default {
@@ -156,38 +157,37 @@ export default {
       type: Number,
       default: null
     },
-    message: {
-      type: String,
-      default: ''
+    dataGroup: {
+      type: Object,
+      default() {
+        return {}
+      }
     },
     selectedRecordGroupId: {
       type: Number,
       default: null
     },
-    selectedRecordGroups: {
-      type: Array,
-      default() {
-        return []
-      }
+    parentRecordGroupId: {
+      type: Number,
+      default: null
     }
   },
   data() {
     return {
-      dataGroup: {},
       recordGroups: [],
+      recordGroupCreate: {},
       searchRecordGroupsModal: false,
       createRecordGroup: false,
       needToSelectParentModal: false,
       confirmDelete: false,
       deleteItem: null,
-      parentRecordGroupId: null,
       isLoading: false,
       params: {
         data_list_group_id: this.dataListGroupId,
         page: 1,
         search_text: '',
         interval: 500,
-        record_group_id: null
+        record_group_id: this.parentRecordGroupId
       },
       preloading: false
     }
@@ -205,15 +205,6 @@ export default {
     }
   },
   watch: {
-    searchRecordGroupsModal: {
-      deep: true,
-      handler(data) {
-        if (data) {
-          this.recordGroups = []
-          this.getRecordGroups()
-        }
-      }
-    },
     openDataGroupSearch: {
       deep: true,
       handler(data) {
@@ -224,55 +215,40 @@ export default {
       }
     }
   },
-  created() {
-    const data = {
-      dataListGroupId: this.dataListGroupId,
-      parentRecordGroupId: this.parentRecordGroupId
-    }
-    this.$emit('getRecordGroupParams', data)
-  },
   mounted() {
-    this.getDataGroup()
+    _.forEach(_.keys(this.dataGroup.schema), item => {
+      this.recordGroupCreate[item] = ''
+    })
+    this.getRecordGroups()
+  },
+  destroyed() {
+    this.recordGroups = []
   },
   methods: {
-    getDataGroup() {
-      this.$api.dataGroups.getById(this.dataListGroupId).then(res => {
-        this.dataGroup = res
-      })
-    },
     getRecordGroups() {
-      if (this.dataListGroupId || this.dataGroup) {
-        const parent = _.find(this.selectedRecordGroups, {
-          data_list_group_id: this.dataGroup.data_list_group_id
-        })
-        if (parent) {
-          this.parentRecordGroupId = parent.record_group_id
-          this.params.record_group_id = parent.record_group_id
-        }
-        if (this.getToken) {
-          this.isLoading = true
-          this.$api.recordGroups
-            .get(this.params)
-            .then(res => {
-              res.data.forEach(item => {
-                this.recordGroups.push(item)
-              })
-              if (res.next_page_url !== null) {
-                ++this.params.page
-                this.getRecordGroups()
-              } else {
-                this.params.page = 1
-              }
+      if (this.getToken) {
+        this.isLoading = true
+        this.$api.recordGroups
+          .get(this.params)
+          .then(res => {
+            res.data.forEach(item => {
+              this.recordGroups.push(item)
             })
-            .finally(() => {
-              this.isLoading = false
-            })
-        }
+            if (res.next_page_url !== null) {
+              ++this.params.page
+              this.getRecordGroups()
+            } else {
+              this.params.page = 1
+            }
+          })
+          .finally(() => {
+            this.isLoading = false
+          })
       }
     },
-    setData(data) {
+    setRecordGroup(data) {
       this.searchRecordGroupsModal = false
-      this.$emit('setDataGroup', data)
+      this.$emit('setNewRecordGroup', data)
     },
     renderData(recordGroup) {
       const res = []

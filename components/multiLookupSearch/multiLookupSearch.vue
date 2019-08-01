@@ -1,10 +1,10 @@
 <template>
   <div>
     <input-standard
-      :disabled="true"
-      :computed_value="getCertificateElement.data"
+      :computed_value="selectedLookupTitle"
       :search_icon="true"
-      class="left-icon"
+      :class="{filled: selectedLookupTitle.length}"
+      class="lookup"
       @click.native="showLookupModal = true" />
     <div
       v-if="error"
@@ -17,11 +17,9 @@
         <multi-lookup-selector
           :options="recordLookups"
           :is-loading="isLoading"
-          :default-selected="getLookupItems"
-          :parent-element="getCertificateParentElement"
+          :default-selected="selectedItems"
           @searchText="searchText = $event"
           @selectedParentItem="selectedParentItem = $event"
-          @getLookupData="getDataListDefaults"
           @deleteCustomLookup="deleteCustomLookup($event)"
           @update="selectedItems = $event"/>
       </div>
@@ -39,7 +37,7 @@
         </button-rounded>
         <button-rounded
           class="btn-green rounded small"
-          @click.native="setData">
+          @click.native="selectItems">
           Select
         </button-rounded>
       </div>
@@ -48,7 +46,7 @@
       v-if="needToSelectParentModal"
       header="Warning">
       <template slot="body">
-        Please select {{ dataListDefaultName }}
+        Please select {{ parentElement.data }}
       </template>
       <div
         slot="footer"
@@ -86,11 +84,11 @@
 </template>
 
 <script>
+import { mapMutations, mapGetters } from 'vuex'
 import VModal from '~/components/vModal/vModal'
 import ButtonRounded from '~/components/buttonRounded/'
 import InputStandard from '~/components/inputStandard/'
-import multiLookupSelector from '~/components/multiLookupSelector'
-import { mapMutations, mapGetters } from 'vuex'
+import multiLookupSelector from './multiLookupSelector'
 
 export default {
   name: 'MultiLookupSearch',
@@ -101,41 +99,25 @@ export default {
     ButtonRounded
   },
   props: {
-    name: {
-      type: String,
-      default: ''
+    parentElement: {
+      type: Object,
+      default() {
+        return {}
+      }
     },
-    elementId: {
-      type: Number,
-      default: null
+    selectedLookup: {
+      type: Object,
+      default() {
+        return {}
+      }
     },
-    elDataListDefaultId: {
-      type: Number,
-      default: null
-    },
-    elDataListGroupId: {
-      type: Number,
-      default: null
-    },
-    formSectionId: {
+    dataListDefaultId: {
       type: Number,
       default: null
     },
     message: {
       type: String,
       default: ''
-    },
-    formSectionElements: {
-      type: Array,
-      default() {
-        return []
-      }
-    },
-    certificateElements: {
-      type: Array,
-      default() {
-        return []
-      }
     },
     required: {
       type: Boolean,
@@ -150,26 +132,26 @@ export default {
       needToSelectParentModal: false,
       deleteLookupModal: false,
       itemToDelete: {},
-      dataListDefaultName: null,
-      dataListDefaults: null,
       recordLookups: [],
       childRecordLookupIds: [],
       selectedChildRecordLookupid: 0,
       selectedParentItem: null,
       isLoading: false,
       params: {
-        data_list_default_id: this.elDataListDefaultId,
+        data_list_default_id: this.dataListDefaultId,
         page: 1,
+        last_page: null,
         search_text: '',
         interval: 500,
         record_lookup_id: null,
         record_lookup_type: null
       },
       createLookupParams: {
-        data_list_default_id: this.elDataListDefaultId,
+        data_list_default_id: this.dataListDefaultId,
         record_lookup_id: null,
         record_lookup_type: 'system',
-        data: ''
+        data: '',
+        title: ''
       },
       preloading: false,
       deletePreloading: false,
@@ -177,112 +159,77 @@ export default {
     }
   },
   computed: {
-    getCertificateParentElement() {
-      const formElement = _.find(this.formSectionElements, {
-        id: this.elementId
+    selectedLookupTitle() {
+      let title = ''
+      let titles = []
+      const selectedLookups = [
+        ...this.selectedLookup.record_lookups_system,
+        ...this.selectedLookup.record_lookups_custom
+      ]
+      selectedLookups.forEach(i => {
+        titles.push(i.title)
       })
-      if (formElement.form_section_element_id !== 0) {
-        const parentFormElement = _.find(this.formSectionElements, {
-          id: formElement.form_section_element_id
-        })
-        const parentCertificateElement = _.find(this.certificateElements, {
-          form_section_element_id: parentFormElement.id
-        })
-        return parentCertificateElement
+      if (titles.length) {
+        title = titles.join(', ')
       }
-    },
-    getCertificateElement() {
-      return _.find(this.certificateElements, {
-        form_section_element_id: this.elementId
-      })
+      return title
     },
     getLookupItems() {
       let items = []
-      const selectedCerfiticateItems = [
-        ...this.getCertificateElement.record_lookups_custom,
-        ...this.getCertificateElement.record_lookups_system
+      const selectedLookups = [
+        ...this.selectedLookup.record_lookups_custom,
+        ...this.selectedLookup.record_lookups_system
       ]
-      if (selectedCerfiticateItems.length > 0) {
-        items = _.intersectionBy(
-          this.recordLookups,
-          selectedCerfiticateItems,
-          'id'
-        )
+      if (selectedLookups.length > 0) {
+        items = _.intersectionBy(this.recordLookups, selectedLookups, 'id')
       }
       return items
     }
   },
   watch: {
-    getLookupItems: {
-      deep: true,
+    showLookupModal: {
       handler(data) {
-        if (this.selectedItems.length === 0) {
-          this.selectedItems = data
+        if (this.parentElement.hasOwnProperty('id')) {
+          if (data) {
+            if (this.parentElement.data.length) {
+              this.childRecordLookupIds = [
+                // eslint-disable-next-line
+                ...parentElement.record_lookups_custom.map(e => e,record_type = 'custom'),
+                // eslint-disable-next-line
+                ...parentElement.record_lookups_custom.map(e => e,record_type = 'system')
+              ]
+              this.getRecordLookups()
+            } else {
+              this.closeLookupModal()
+              this.needToSelectParentModal = true
+            }
+          } else {
+            this.recordLookups = []
+          }
         }
       }
     }
   },
   mounted() {
-    if (!this.getCertificateElement.data.length) {
-      this.errorRequired(true)
-    } else {
-      this.errorRequired(false)
+    if (!this.parentElement.hasOwnProperty('id')) {
+      this.getRecordLookups()
     }
+    console.log(this.selectedLookup)
+    // if (!this.computedValue.length) {
+    //   this.errorRequired(true)
+    // } else {
+    //   this.errorRequired(false)
+    // }
   },
   methods: {
+    ...mapGetters({ getDataListDefaults: 'dataListItems/getDataListDefaults' }),
     ...mapMutations({
       setOldSelectedOptions: 'dataView/setOldLookupSelectedOptions',
       clearOldSelectedOptions: 'dataView/clearOldLookupSelectedOptions'
     }),
-    getDataListDefaults() {
-      this.isLoading = true
-      this.recordLookups = []
-      this.$api.dataListDefaults
-        .getDataListDefaults()
-        .then(res => {
-          this.dataListDefaults = res
-        })
-        .finally(() => {
-          this.prepareData()
-        })
-    },
-    prepareData() {
-      const fElement = _.find(this.formSectionElements, {
-        id: this.elementId
-      })
-      if (
-        fElement.form_section_element_id === 0 ||
-        fElement.form_section_element_id === null
-      ) {
-        this.getRecordLookups()
-      } else {
-        const parentFormElement = _.find(this.formSectionElements, {
-          id: fElement.form_section_element_id
-        })
-        const parentCertificateElement = _.find(this.certificateElements, {
-          form_section_element_id: parentFormElement.id
-        })
-        this.dataListDefaultName = parentFormElement.name
-        if (parentCertificateElement.data) {
-          this.childRecordLookupIds = [
-            ..._.map(parentCertificateElement.record_lookups_custom, item => {
-              item.record_type = 'custom'
-              return item
-            }),
-            ..._.map(parentCertificateElement.record_lookups_system, item => {
-              item.record_type = 'system'
-              return item
-            })
-          ]
-          this.getRecordLookups()
-        } else {
-          this.needToSelectParentModal = true
-          this.closeLookupModal()
-        }
-      }
-    },
     getRecordLookups() {
       this.isLoading = true
+      this.recordLookups = []
       if (this.childRecordLookupIds.length > 0) {
         if (this.params.page === 1) {
           this.params.record_lookup_id = this.childRecordLookupIds[
@@ -334,46 +281,32 @@ export default {
           })
       }
     },
-    getParentElementData(id) {
-      const parentElement = _.find(this.formSectionElements, {
-        data_list_default_id: id
-      })
-      return _.find(this.certificateElements, {
-        form_section_element_id: parentElement.id
-      })
-    },
-    setData() {
+    selectItems() {
       this.errorRequired(false)
       this.closeLookupModal()
       const data = {
-        elementId: this.elementId,
         data: '',
+        title: '',
         id: [],
         type: []
       }
-      const childData = {
-        dataListDefaultId: this.elDataListDefaultId,
-        formSectionId: this.formSectionId,
-        elements: data
-      }
       this.selectedItems.forEach((item, index) => {
         data.data = index === 0 ? `${item.data}` : `${data.data}, ${item.data}`
+        data.title =
+          index === 0 ? `${item.title}` : `${data.title}, ${item.title}`
         data.id.push(item.id)
         data.type.push(item.record_type)
       })
-      this.getOldSelectedItems()
-      this.$emit('setLookupData', {
-        setLookupData: data,
-        updateChildData: childData
-      })
+      this.setOldSelectedOptions(this.selectedLookup)
+      this.$emit('setData', data)
     },
     closeLookupModal() {
       this.showLookupModal = false
       this.searchText = ''
       this.itemToDelete = {}
-      this.selectedParentItem = null
     },
     createCustomLookup() {
+      return console.log('create')
       if (!this.preloading) {
         this.preloading = true
         if (this.selectedParentItem) {
@@ -429,15 +362,6 @@ export default {
             this.getRecordLookups()
           })
       }
-    },
-    getOldSelectedItems() {
-      const selectedFormElement = _.find(this.formSectionElements, {
-        id: this.elementId
-      })
-      const selectedCertificateElement = _.find(this.certificateElements, {
-        form_section_element_id: selectedFormElement.id
-      })
-      this.setOldSelectedOptions(selectedCertificateElement)
     },
     errorRequired(isError) {
       if (this.required) {

@@ -16,19 +16,19 @@
         v-show="isOpen"
         class="list-sriped mt-3">
         <checkbox
-          :default-checked="manualChecked.read"
+          :data="manualChecked.read"
           label="Read"
           @change="changeValue('read', $event)"/>
         <checkbox
-          :default-checked="manualChecked.update"
+          :data="manualChecked.update"
           label="Update"
           @change="changeValue('update', $event)"/>
         <checkbox
-          :default-checked="manualChecked.create"
+          :data="manualChecked.create"
           label="Create"
           @change="changeValue('create', $event)"/>
         <checkbox
-          :default-checked="manualChecked.delete"
+          :data="manualChecked.delete"
           label="Delete"
           @change="changeValue('delete', $event)"/>
       </ul>
@@ -72,7 +72,7 @@ export default {
       }
     }
   },
-  beforeMount() {
+  mounted() {
     this.isOpen = this.opened ? true : false
     // this.opened ? (this.isOpen = true) : false
     this.manualChecked = {

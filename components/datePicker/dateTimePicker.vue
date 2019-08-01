@@ -6,6 +6,7 @@
       :type="type"
       :format="format"
       :width="290"
+      :confirm="true"
       :popup-style="{top: 'left'}"
       :first-day-of-week="1"
       :value-type="'format'"

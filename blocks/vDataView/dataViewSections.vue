@@ -26,15 +26,15 @@ export default {
   name: 'DataViewSections',
   components: { dataViewSectionsTree },
   props: {
-    sections: {
-      type: Array,
-      default() {
-        return []
-      }
-    },
-    openedSectionId: {
+    selectedSectionId: {
       type: Number,
       default: null
+    },
+    form: {
+      type: Object,
+      default() {
+        return {}
+      }
     }
   },
   data() {
@@ -49,7 +49,7 @@ export default {
       storageValidationErrors: 'validation/getErrors'
     }),
     transformToTree() {
-      const sections = _.cloneDeep(this.sections)
+      const sections = this.$order(_.cloneDeep(this.form.sections))
       let nodes = {}
       return _.filter(sections, obj => {
         let id = obj.id
@@ -60,20 +60,16 @@ export default {
           (nodes[parentId] = nodes[parentId] || { children: [] })[
             'children'
           ].push(obj)
-
         return nodes
       })
     }
   },
   watch: {
-    openedSectionId: {
-      deep: true,
+    selectedSectionId: {
       handler(data) {
-        this.activeSectionId = this.openedSectionId
-        window.scroll({
-          top: 0,
-          left: 0
-        })
+        if (data) {
+          this.activeSectionId = data
+        }
       }
     }
   },
@@ -84,26 +80,18 @@ export default {
       })
       return item && item.status
     },
-    subSections(id) {
-      const sub = []
-      _.forEach(this.sections, section => {
-        if (section.form_section_id === id) {
-          sub.push(section)
-        }
-      })
-      return sub
-    },
     makeFolder(item) {
       Vue.set(item, 'children', [])
       this.addItem(item)
     },
     openSection(id) {
-      this.activeSectionId = id
       this.$emit('openSection', id)
-      const current = _.find(this.sections, { id })
+      const current = this.form.sections.find(s => id === id)
       if (current) {
-        const hasChild = _.filter(this.sections, { form_section_id: id })
-        if (hasChild.length > 0) {
+        const hasChild = this.form.sections.filter(
+          s => s.form_section_id === id
+        )
+        if (hasChild.length) {
           this.parentSectionId = id
         }
       }
@@ -134,6 +122,7 @@ export default {
     overflow: hidden;
     position: relative;
     padding: 8px 20px;
+    user-select: none;
 
     & ~ .sections-item {
       margin-top: 10px;
@@ -175,6 +164,14 @@ export default {
     &.error {
       &::before {
         background: red;
+      }
+    }
+
+    &.folder {
+      padding: 0;
+
+      &.open {
+        padding: 0 10px;
       }
     }
   }

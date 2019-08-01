@@ -28,6 +28,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import buttonRounded from '~/components/buttonRounded'
 
 export default {
@@ -36,12 +37,6 @@ export default {
     buttonRounded
   },
   props: {
-    sections: {
-      type: Array,
-      default() {
-        return []
-      }
-    },
     selectedSectionId: {
       type: Number,
       default: 0
@@ -59,16 +54,21 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({ form: 'dataView/form' }),
     filteredSections() {
-      return _.filter(this.sections, section => {
+      const sections = _.cloneDeep(this.form.sections)
+      return _.filter(sections, section => {
         return section.autoload === false
       })
     },
     selectedSectionIndex() {
-      const selectedSection = _.find(this.filteredSections, {
-        id: this.selectedSectionId
-      })
-      return _.indexOf(this.filteredSections, selectedSection)
+      return this.filteredSections.findIndex(
+        s => s.id === this.selectedSectionId
+      )
+      // const selectedSection = _.find(this.filteredSections, {
+      //   id: this.selectedSectionId
+      // })
+      // return _.indexOf(this.filteredSections, selectedSection)
     }
   },
   watch: {

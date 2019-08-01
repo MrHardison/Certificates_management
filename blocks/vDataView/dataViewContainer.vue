@@ -1,18 +1,15 @@
 <template>
   <div class="row">
     <data-view-sections
-      :sections="formSections"
       :section-elements="certificateSections"
       :opened-section-id="selectedSectionId"
       @openSection="selectedSectionId = $event" />
-    <template v-if="activeFormSection">
+    <template v-if="selectedFormSection && selectedCertSection">
       <data-view-content
-        :key="activeFormSection.id"
-        :form-section="activeFormSection"
-        :certificate-section="activeCertificateSection"
+        :key="selectedFormSection.id"
+        :form-section="selectedFormSection"
+        :certificate-section="selectedCertSection"
         :record-groups="selectedRecordGroups"
-        :all-sections="formSections"
-        :all-cert-sections="certificateSections"
         :selected-section-id="selectedSectionId"
         @validationError="$emit('validationError', $event)"
         @chooseParent="chooseParent($event)"
@@ -88,14 +85,20 @@ export default {
     }
   },
   computed: {
-    ...mapGetters({ getdataListGroups: 'dataListGroups/getdataListGroups' }),
+    ...mapGetters({
+      allForm: 'dataView/form',
+      getDataListGroups: 'dataListItems/getDataListGroups'
+    }),
+    selectedFormSection() {
+      // eslint-disable-next-line prettier/prettier
+      return this.$store.getters['dataView/formSectionById'](this.selectedSectionId)
+    },
+    selectedCertSection() {
+      // eslint-disable-next-line prettier/prettier
+      return this.$store.getters['dataView/certSectionById'](this.selectedSectionId)
+    },
     activeFormSection() {
       return _.find(this.formSections, { id: this.selectedSectionId })
-    },
-    activeCertificateSection() {
-      return _.find(this.certificateSections, {
-        form_section_id: this.selectedSectionId
-      })
     }
   },
   watch: {
@@ -165,7 +168,6 @@ export default {
       this.formSections = this.$order(this.dataViewForm.sections)
       this.formSections.some(section => {
         if (!section.autoload) {
-          this.selectedSectionId = section.id
           return true
         }
       })
@@ -195,7 +197,7 @@ export default {
         certificateSection.elements = _.uniq(certificateSection.elements)
         this.certificateSections.push(certificateSection)
       })
-      this.$emit('setNewCertificateSections', this.certificateSections)
+      this.$emit('', this.certificateSections)
     },
     createCertElements(section) {
       return section
@@ -267,7 +269,7 @@ export default {
     },
     resetRecordGroupChild(data_list_group_id) {
       let fElementsArray = []
-      const dataListElement = _.find(this.getdataListGroups, {
+      const dataListElement = _.find(this.getDataListGroups, {
         data_list_group_id
       })
       if (dataListElement) {
@@ -294,7 +296,7 @@ export default {
             cElement.record_group_id = null
           })
         })
-        const childElement = _.find(this.getdataListGroups, {
+        const childElement = _.find(this.getDataListGroups, {
           data_list_group_id: dataListElement.id
         })
         if (childElement) {
@@ -316,9 +318,9 @@ export default {
         }
       })
       if (selectedDataListGroup) {
-        _.forEach(this.getdataListGroups, item => {
+        _.forEach(this.getDataListGroups, item => {
           if (item.id === selectedDataListGroup) {
-            parentDataListGroup = _.find(this.getdataListGroups, {
+            parentDataListGroup = _.find(this.getDataListGroups, {
               id: item.data_list_group_id
             })
           }

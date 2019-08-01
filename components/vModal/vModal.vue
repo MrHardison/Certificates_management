@@ -108,18 +108,15 @@ export default {
   float: right;
 }
 
-.modal-enter {
-  opacity: 0;
-}
-
+.modal-enter-active,
 .modal-leave-active {
-  opacity: 0;
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
 }
 
-.modal-enter .modal-container,
-.modal-leave-active .modal-container {
-  -webkit-transform: scale(1.1);
+.modal-enter,
+.modal-leave-to {
   transform: scale(1.1);
+  opacity: 0;
 }
 
 .modal-overlay {
@@ -128,6 +125,7 @@ export default {
   height: 100vh;
   z-index: 1;
 }
+
 .close {
   cursor: pointer;
   color: red;

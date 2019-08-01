@@ -23,7 +23,7 @@
             :key="index"
             :class="{active: selectedParentItem ? selectedParentItem === option.id : ''}"
             class="parent-item"
-            @click="selectParentItem(option.id)">{{ option.data }}</li>
+            @click="selectParentItem(option.id)">{{ option.title }}</li>
         </template>
       </ul>
     </div>
@@ -41,6 +41,7 @@
             :key="index"
             :class="{active: selectedOption(option)}"
             class="option d-flex justify-content-between">
+            {{ selectedOption(option) }}
             <div
               class="option-container"
               @click="selectOption(option)">
@@ -130,8 +131,7 @@ export default {
       deep: true,
       handler(data) {
         if (this.selectedItems.length === 0) {
-          // this.selectedItems = [...this.defaultSelected]
-          this.selectedItems = this.defaultSelected.slice()
+          this.selectedItems = this.defaultSelected
         }
       }
     }
@@ -144,18 +144,17 @@ export default {
   },
   methods: {
     selectedOption(item, deleted) {
-      return _.find(deleted ? this.defaultSelected : this.selectedItems, {
-        id: item.id
-      })
-        ? true
-        : false
+      return this.defaultSelected.find(i => i.id === item.id) ? true : false
     },
     getOptionView(option) {
       if (typeof option === 'string' || typeof option === 'number') {
         return option
-      } else if (typeof option === 'object' && option.hasOwnProperty('data')) {
-        return option.data
-      } else if (typeof option === 'object' && !option.hasOwnProperty('data')) {
+      } else if (typeof option === 'object' && option.hasOwnProperty('title')) {
+        return option.title
+      } else if (
+        typeof option === 'object' &&
+        !option.hasOwnProperty('title')
+      ) {
         return `Empty title - ${this.options.indexOf(option)}`
       }
     },
@@ -179,5 +178,5 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import './multiLookupSelector';
+@import './multiLookupSelector.scss';
 </style>

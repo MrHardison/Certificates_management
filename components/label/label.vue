@@ -1,9 +1,8 @@
 <template>
   <label
     :style="{fontSize: `${fontSize}px`, color: `#${color}`}"
-    class="label label-fieldtype">
-    {{ description || name }}
-  </label>
+    class="label label-fieldtype"
+    v-html="fixedDescription || description || name"/>
 </template>
 
 <script>
@@ -26,6 +25,15 @@ export default {
       type: String,
       default: '16'
     }
+  },
+  computed: {
+    fixedDescription() {
+      if (this.description && this.description.includes('\n')) {
+        return this.description.replace(/(?:\r\n|\r|\n)/g, '<br>')
+      } else {
+        return null
+      }
+    }
   }
 }
 </script>
@@ -34,7 +42,7 @@ export default {
 .label {
   color: $gray;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 26px;
 }
 </style>

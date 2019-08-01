@@ -2,12 +2,13 @@
   background: $main_dark;
   float: left;
   min-height: 100vh;
+  overflow: hidden;
   position: fixed;
   top: 0;
   transition: width 300ms ease-in-out;
   will-change: width;
   width: 290px;
-  z-index: 2;
+  z-index: 3;
 
   &.closed {
     width: 75px;

@@ -203,7 +203,7 @@ export default {
               .toLowerCase()
               .indexOf(this.searchText.toLowerCase()) > -1
           )
-        }).slice()
+        })
         return option
       })
       return _.filter(modified, topOption => {
@@ -218,10 +218,18 @@ export default {
         this.getCertificates()
       }
     },
+    isCreate: {
+      handler(data) {
+        if (!data) {
+          this.searchText = ''
+        }
+      }
+    },
     '$route.name': {
       handler() {
         this.getCertificates()
         this.getFormCategories()
+        this.params.search_text = ''
       }
     }
   },
@@ -233,16 +241,14 @@ export default {
     getFormCategories() {
       if (this.getToken) {
         this.$api.dataView.create().then(res => {
-          const modifiedResponse = res
-            .map(item => {
-              item.title = item.name
-              item.options = item.forms.map(option => {
-                option.title = option.name
-                return option
-              })
-              return item
+          const modifiedResponse = res.map(item => {
+            item.title = item.name
+            item.options = item.forms.map(option => {
+              option.title = option.name
+              return option
             })
-            .slice()
+            return item
+          })
           this.formCategories = modifiedResponse
         })
       }

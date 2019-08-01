@@ -68,6 +68,12 @@ export default {
         }
         this.$emit('change', this.model)
       }
+    },
+    selected: {
+      deep: true,
+      handler(data) {
+        this.model = data
+      }
     }
   },
   mounted() {

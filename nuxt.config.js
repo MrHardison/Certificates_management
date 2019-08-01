@@ -55,6 +55,7 @@ module.exports = {
   */
   plugins: [
     '~/plugins/axios',
+    '~/plugins/alerts',
     '~/plugins/click-outside',
     '~/plugins/vue-async-computed',
     '~/plugins/lodash',
@@ -123,10 +124,10 @@ module.exports = {
         'https://swfy-weworktogethersoftware-staging.eks.swfy.co.uk/api/v3/web',
       'https://app.weworktogethersoftware.com':
         'https://api.weworktogethersoftware.com/api/v3/web',
-      'https://swfy-wwt-web-app.eks.swfy.co.uk': 
+      'https://swfy-wwt-web-app.eks.swfy.co.uk':
         'https://api.weworktogethersoftware.com/api/v3/web',
       'http://localhost:5000':
-        'https://swfy-weworktogethersoftware-staging.eks.swfy.co.uk/api/v3/web',
+        'https://swfy-weworktogethersoftware-staging.eks.swfy.co.uk/api/v3/web'
     }
   },
 

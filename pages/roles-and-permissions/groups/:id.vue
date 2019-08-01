@@ -30,7 +30,7 @@
                       :key="role.id"
                       class="col-12">
                       <checkbox
-                        :default-checked="groupRoles[role.id]"
+                        :data="groupRoles[role.id]"
                         :label="role.name"
                         @change="groupRoles[role.id] = $event"/>
                     </div>
@@ -46,7 +46,7 @@
                       :key="user.id"
                       class="col-12">
                       <checkbox
-                        :default-checked="groupUsers[user.id]"
+                        :data="groupUsers[user.id]"
                         :label="user.email"
                         @change="groupUsers[user.id] = $event"/>
                     </div>

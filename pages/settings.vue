@@ -48,7 +48,7 @@
                           <image-loader
                             :key="index"
                             :parent_image="getByHolder(element.holder)"
-                            class="big-logo col-lg-4 col-md-6"
+                            class="big-logo col-lg-12 col-md-12"
                             @update="setByHolder(element.holder, $event)" />
                         </div>
                       </template>

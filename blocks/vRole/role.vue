@@ -23,11 +23,11 @@
           <div class="form-group">
             <h4 class="label">Login:</h4>
             <checkbox
-              :default-checked="role.login_app"
+              :data="role.login_app"
               label="APP"
               @change="role.login_app = $event"/>
             <checkbox
-              :default-checked="role.login_web"
+              :data="role.login_web"
               label="WEB"
               @change="role.login_web = $event"/>
           </div>
@@ -60,7 +60,7 @@
     <div class="col-12">
       <h4 class="title">Forms</h4>
       <checkbox
-        :default-checked="role.own_certificates"
+        :data="role.own_certificates"
         label="Only self created certificates?"
         @change="role.own_certificates = $event"/>
       <div class="row mt-4">

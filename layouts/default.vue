@@ -13,7 +13,7 @@
     <div
       :class="{closed: isClosed}"
       class="page-content">
-      <nuxt @breadcrumb="''"/>
+      <nuxt/>
     </div>
     <notifications
       group="alerts"/>
@@ -46,15 +46,9 @@ export default {
         .ui()
         .then(res => {
           const menuArray = _.filter(res, item => {
-            return item.properties.route
-            // if (
-            //   (item.properties.module === 'certificates' && !item.deleted_at) ||
-            //   (item.properties.module === 'settings' && !item.deleted_at) ||
-            //   (item.properties.module === 'data_groups' && !item.deleted_at) ||
-            //   (item.properties.module === 'roles_and_permissions' &&
-            //     !item.deleted_at)
-            //   return item
-            // }
+            // eslint-disable-next-line
+            const hidden = item.properties.hasOwnProperty('hidden') ? item.properties.hidden : []
+            return !hidden.find(i => i === 'web') && item.properties.route
           })
           this.reload(this.$order(menuArray))
         })

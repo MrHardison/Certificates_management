@@ -4,29 +4,29 @@
       <input-standard
         :label="'Certificate name'"
         :placeholder="'Certificate name'"
-        :computed_value="certificate.name"
+        :computed_value="certificateName"
         @update="$emit('setName', $event)"/>
     </div>
     <div class="col-md-6 text-right responsive">
       <button-rounded
         :preloading="preloading.preview"
         :class="{'btn-smoke': validationErrors.length}"
-        class="btn-white rounded medium preloading-mr0"
-        @click.native="$emit('updateCertificate', true)">
-        <fa
-          :icon="['fal', 'file']"
-          class="mr-2"/>
-        Preview
-      </button-rounded>
-      <button-rounded
-        :preloading="preloading.update"
-        :class="{'btn-smoke': validationErrors.length}"
         class="btn-green rounded medium preloading-mr0"
-        @click.native="$emit('updateCertificate')">
+        @click.native="!validationErrors.length ? $emit('save') : ''">
         <fa
           :icon="['fal', 'save']"
           class="mr-2"/>
         Save
+      </button-rounded>
+      <button-rounded
+        :preloading="preloading.preview"
+        :class="{'btn-smoke': validationErrors.length}"
+        class="btn-white rounded medium preloading-mr0"
+        @click.native="!validationErrors.length ? $emit('render', true) : ''">
+        <fa
+          :icon="['fal', 'file']"
+          class="mr-2"/>
+        Preview
       </button-rounded>
     </div>
   </div>
@@ -39,17 +39,9 @@ export default {
   name: 'DataViewTitle',
   components: { InputStandard, buttonRounded },
   props: {
-    certificate: {
-      type: Object,
-      default() {
-        return {}
-      }
-    },
-    form: {
-      type: Object,
-      default() {
-        return {}
-      }
+    certificateName: {
+      type: String,
+      default: ''
     },
     validationErrors: {
       type: Array,

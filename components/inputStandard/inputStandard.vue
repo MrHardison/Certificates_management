@@ -13,9 +13,9 @@
         :maxlength="limits.max ? parseInt(limits.max) : 50"
         v-model.trim="value"
         class="form-control"
-        @blur="validation">
+        @blur="errorsCheck">
       <div
-        v-if="value.length"
+        v-if="value.length && clear"
         class="clear">
         <fa
           :icon="['fal', 'times-circle']"
@@ -68,6 +68,10 @@ export default {
     defaultText: {
       type: String,
       default: ''
+    },
+    clear: {
+      type: Boolean,
+      default: true
     },
     computed_value: {
       type: String,
@@ -158,7 +162,11 @@ export default {
       this.value = this.computed_value
     }
     if (this.certId) {
-      this.value = this.computed_value
+      if (this.computed_value === this.defaultText) {
+        this.value = ''
+      } else {
+        this.value = this.computed_value
+      }
     } else if (!this.certId && this.defaultText.length) {
       if (this.computed_value.length) {
         this.value = this.computed_value
@@ -169,6 +177,20 @@ export default {
     this.validation()
   },
   methods: {
+    errorsCheck() {
+      this.validation()
+      setTimeout(() => {
+        if (this.error) {
+          this.$alerts({
+            group: 'alerts',
+            type: 'error',
+            title: this.fieldName,
+            text: this.required ? this.warningMessage : this.errorText,
+            duration: 1000
+          })
+        }
+      }, 0)
+    },
     validation() {
       const error = {
         id: this.elementId !== null ? this.elementId : this._uid,

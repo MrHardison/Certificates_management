@@ -54,6 +54,11 @@ export default {
         }
         this.$emit('change', data)
       }
+    },
+    data: {
+      handler(data) {
+        this.model = data
+      }
     }
   },
   mounted() {

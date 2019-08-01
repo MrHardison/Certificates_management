@@ -1,6 +1,6 @@
 <template>
   <li
-    :class="{open: isOpen}"
+    :class="{open: isOpen, folder: isFolder}"
     class="sections-item">
     <div
       :class="{bold: isFolder, active: isOpen}"
@@ -81,6 +81,7 @@ export default {
 .bold {
   align-items: center;
   display: flex;
+  padding: 8px 20px;
   position: relative;
   justify-content: space-between;
 
@@ -90,7 +91,7 @@ export default {
   }
 
   &.active {
-    padding: 0 10px;
+    padding: 10px 10px 0;
 
     .arrow {
       transform: rotate(180deg);
@@ -100,7 +101,7 @@ export default {
 .child-list {
   box-sizing: border-box;
   padding-left: 10px;
-  margin: 20px 0 10px 0;
+  margin: 10px 0 10px 0;
 
   .sections-item {
     background: #fff;
@@ -147,6 +148,10 @@ export default {
       .arrow {
         transform: rotate(-90deg);
       }
+    }
+
+    &.folder {
+      padding: 0 20px 0 0;
     }
   }
 }

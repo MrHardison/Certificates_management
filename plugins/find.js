@@ -1,5 +1,6 @@
 export default ({ axios }, inject) => {
   const formSectionElement = (form, id = 0) => {
+    id = +id
     if (!form) {
       return {}
     } else {
@@ -14,6 +15,7 @@ export default ({ axios }, inject) => {
   }
   inject('getFormSectionElementById', formSectionElement)
   const certificateSectionElement = (cert, form_section_element_id = 0) => {
+    form_section_element_id = +form_section_element_id
     if (!cert) {
       return {}
     } else {
@@ -23,10 +25,29 @@ export default ({ axios }, inject) => {
           elements: [{ form_section_element_id }]
         }
       )
-      return _.find(certificateSection.elements, {
-        form_section_element_id
-      })
+      if (certificateSection) {
+        return _.find(certificateSection.elements, {
+          form_section_element_id
+        })
+      } else {
+        return {}
+      }
     }
   }
   inject('getCertificateSectionElementById', certificateSectionElement)
+  const certificateElementById = (section, form_section_element_id = 0) => {
+    const element = _.find(section.elements, { form_section_element_id })
+    if (element) {
+      return element
+    } else return {}
+  }
+  inject('certificateElementById', certificateElementById)
+
+  const getLookupParent = (section, id = 0) => {
+    const element = _.find(section.elements, { id })
+    if (element) {
+      return element
+    } else return {}
+  }
+  inject('getLookupParent', getLookupParent)
 }
