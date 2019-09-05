@@ -42,7 +42,7 @@
               :preloading="preloading"
               class="btn-green rounded small"
               @click.native="createUser">
-              Create
+              Save
             </button-rounded>
           </div>
         </div>

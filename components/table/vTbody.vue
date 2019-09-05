@@ -30,11 +30,6 @@
                         class="sortable-icon d-flex my-auto"/>
                     </template>
                   </template>
-                  <template v-else>
-                    <fa
-                      :icon="['fa', 'sort']"
-                      class="sortable-icon d-flex my-auto"/>
-                  </template>
                 </div>
               </th>
             </template>

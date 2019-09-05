@@ -2,7 +2,7 @@
   background: $main_dark;
   float: left;
   min-height: 100vh;
-  overflow: hidden;
+  // overflow: hidden;
   position: fixed;
   top: 0;
   transition: width 300ms ease-in-out;
@@ -169,6 +169,7 @@
 
     @media (max-width: 768px) {
       bottom: auto;
+      color: #fff;
       padding-left: 0;
       right: -70px;
       top: 15px;

@@ -122,13 +122,13 @@ export default {
       setToken: 'token/setToken'
     }),
     logout() {
-      this.setToken(false)
       if (!this.preloading) {
         this.preloading = true
         this.$api.auth.logout().then(res => {
           _.delay(() => {
             this.preloading = false
           }, 1000)
+          this.setToken(null)
           this.$router.push('/auth/login')
         })
       }

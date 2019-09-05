@@ -129,29 +129,30 @@ export default {
     computed_value: {
       deep: true,
       handler(data) {
-        if (data.length) {
+        if (data && data.length) {
           this.value = data
         }
       }
     }
   },
   mounted() {
-    if (!this.defaultText) {
-      this.value = this.computed_value
-    }
-    if (this.certId) {
-      if (this.computed_value === this.defaultText) {
-        this.value = ''
-      } else {
-        this.value = this.computed_value
-      }
-    } else if (!this.certId && this.defaultText.length) {
-      if (this.computed_value.length) {
-        this.value = this.computed_value
-      } else {
-        this.value = this.defaultText
-      }
-    }
+    this.value = this.computed_value
+    // if (!this.defaultText) {
+    //   this.value = this.computed_value
+    // }
+    // if (this.certId) {
+    //   if (this.computed_value === this.defaultText) {
+    //     this.value = ''
+    //   } else {
+    //     this.value = this.computed_value
+    //   }
+    // } else if (!this.certId && this.defaultText.length) {
+    //   if (this.computed_value.length) {
+    //     this.value = this.computed_value
+    //   } else {
+    //     this.value = this.defaultText
+    //   }
+    // }
     this.validation()
   },
   methods: {

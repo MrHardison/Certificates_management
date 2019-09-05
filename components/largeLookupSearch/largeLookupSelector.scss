@@ -50,15 +50,15 @@
     }
     &-item {
       align-items: center;
-      border-radius: 40px;
+      border-radius: 20px;
       border: 1px solid #d4d9e1;
       box-sizing: border-box;
       color: $main_blue;
       cursor: pointer;
       background: #fff;
       display: inline-flex;
-      padding: 5px 10px;
-      justify-content: space-between;
+      padding: 5px 15px;
+      justify-content: center;
 
       &:hover {
         background: linear-gradient(to right, #90ca2a 0%, #a8ec2f 100%);

@@ -195,9 +195,8 @@ export default {
       }
     },
     filteredOptions() {
-      const base = _.cloneDeep(this.formCategories)
-      const modified = _.map(base, option => {
-        option.options = _.filter(this.$order(option.options), innerOption => {
+      const modified = _.cloneDeep(this.formCategories).map(option => {
+        option.options = this.$order(option.options).filter(innerOption => {
           return (
             innerOption.name
               .toLowerCase()
@@ -206,9 +205,7 @@ export default {
         })
         return option
       })
-      return _.filter(modified, topOption => {
-        return topOption.options.length
-      })
+      return modified.filter(topOption => topOption.options.length)
     }
   },
   watch: {

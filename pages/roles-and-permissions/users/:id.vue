@@ -23,17 +23,17 @@
             </div>
             <div class="row">
               <div class="col-12">
-                <span>Roles</span>
+                <span>Groups</span>
               </div>
               <template
-                v-for="role in roles">
+                v-for="group in groups">
                 <div
-                  :key="role.id"
+                  :key="group.id"
                   class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-3">
                   <checkbox
-                    :data="userRoles[role.id]"
-                    :label="role.name"
-                    @change="userRoles[role.id] = $event"/>
+                    :data="userGroups[group.id]"
+                    :label="group.name"
+                    @change="userGroups[group.id] = $event"/>
                 </div>
               </template>
             </div>
@@ -51,7 +51,7 @@
               <fa
                 :icon="['fal', 'trash-alt']"
                 class="mr-2" />
-              Delete
+              Delete user
             </button-rounded>
             <button-rounded
               :preloading="preloading"
@@ -95,7 +95,7 @@ import ButtonRounded from '~/components/buttonRounded'
 import VModal from '~/components/vModal/vModal'
 import SpinnerLoader from '~/components/spinerLoader'
 import InputStandard from '~/components/inputStandard'
-import Checkbox from '~/components/checkbox'
+import Checkbox from '~/components/vCheckbox'
 
 export default {
   name: 'Id',
@@ -111,8 +111,8 @@ export default {
       user: {},
       showModal: false,
       isLoading: false,
-      roles: [],
-      userRoles: {},
+      groups: [],
+      userGroups: {},
       preloading: false,
       deletePreloading: false
     }
@@ -122,14 +122,14 @@ export default {
   },
   methods: {
     updateUser() {
-      _.forEach(_.keys(this.userRoles), key => {
-        if (!this.userRoles[key]) {
-          delete this.userRoles[key]
+      _.forEach(_.keys(this.userGroups), key => {
+        if (!this.userGroups[key]) {
+          delete this.userGroups[key]
         }
       })
       const req = {
         user: this.user,
-        roles: _.keys(this.userRoles)
+        groups: _.keys(this.userGroups)
       }
       if (!this.preloading) {
         this.preloading = true
@@ -159,9 +159,11 @@ export default {
         .getById(this.$route.params.id)
         .then(res => {
           this.user = res.user
-          this.roles = res.roles
-          _.forEach(res.roles, role => {
-            this.userRoles[role.id] = !!_.find(res.user.roles, { id: role.id })
+          this.groups = res.groups
+          _.forEach(res.groups, group => {
+            this.userGroups[group.id] = !!_.find(res.user.groups, {
+              id: group.id
+            })
           })
         })
         .finally(() => {

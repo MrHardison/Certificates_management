@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import Checkbox from '~/components/checkbox'
+import Checkbox from '~/components/vCheckbox'
 import TreeItem from '~/blocks/vRole/treeItem'
 
 export default {

@@ -43,7 +43,7 @@ export default {
         if (data == null) {
           data = ''
         }
-        this.$emit('update', data.toLowerCase())
+        this.$emit('update', data)
       }
     }
   }

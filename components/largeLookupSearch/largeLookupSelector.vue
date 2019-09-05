@@ -15,7 +15,7 @@
         @input="$emit('searchText', inputText)">
     </div>
     <div
-      v-if="inputText.length > 0 && Object.keys(parentElement).length > 0"
+      v-if="inputText.length > 0 && Object.keys(parentElement).length"
       class="parent-wrapper my-3">
       <ul class="parent-list">
         <template v-for="(option, index) in parentOptions">
@@ -41,7 +41,6 @@
             :key="index"
             :class="{active: selectedOption(option)}"
             class="option d-flex justify-content-between">
-            {{ selectedOption(option) }}
             <div
               class="option-container"
               @click="selectOption(option)">
@@ -73,7 +72,7 @@
 import SpinnerLoader from '~/components/spinerLoader'
 
 export default {
-  name: 'MultiLookupSelector',
+  name: 'LargeLookupSelector',
   components: {
     SpinnerLoader
   },
@@ -89,9 +88,9 @@ export default {
       default: false
     },
     defaultSelected: {
-      type: Array,
+      type: Object,
       default() {
-        return []
+        return {}
       }
     },
     parentElement: {
@@ -130,9 +129,30 @@ export default {
     options: {
       deep: true,
       handler(data) {
-        if (this.selectedItems.length === 0) {
-          this.selectedItems = this.defaultSelected
+        let arr = []
+        const rebuildSelected = (arr, type) => {
+          if (arr.length) {
+            const cloneArray = _.cloneDeep(arr)
+            return cloneArray.map(item => {
+              return (item = {
+                ...item,
+                record_type: type
+              })
+            })
+          } else {
+            return arr
+          }
         }
+        this.selectedItems = [
+          ...rebuildSelected(
+            this.defaultSelected.record_lookups_system,
+            'system'
+          ),
+          ...rebuildSelected(
+            this.defaultSelected.record_lookups_custom,
+            'custom'
+          )
+        ]
       }
     }
   },
@@ -144,7 +164,7 @@ export default {
   },
   methods: {
     selectedOption(item, deleted) {
-      return this.defaultSelected.find(i => i.id === item.id) ? true : false
+      return this.selectedItems.find(i => i.id === item.id) ? true : false
     },
     getOptionView(option) {
       if (typeof option === 'string' || typeof option === 'number') {
@@ -159,8 +179,13 @@ export default {
       }
     },
     selectOption(option) {
-      if (_.find(this.selectedItems, option)) {
-        this.selectedItems.splice(this.selectedItems.indexOf(option), 1)
+      const selectedOption = this.selectedItems.find(
+        item => item.id === option.id && item.record_type === option.record_type
+      )
+      if (selectedOption) {
+        this.selectedItems = this.selectedItems.filter(
+          item => item.id !== selectedOption.id
+        )
       } else {
         this.selectedItems.push(option)
       }
@@ -178,5 +203,5 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import './multiLookupSelector.scss';
+@import './largeLookupSelector.scss';
 </style>

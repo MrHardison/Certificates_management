@@ -14,7 +14,8 @@
       </span>
       <ul
         v-show="isOpen"
-        class="list-sriped mt-3">
+        class="list-sriped mt-2">
+        <p class="subtitle mb-1">{{ subtitle }}</p>
         <checkbox
           :data="manualChecked.read"
           label="Read"
@@ -29,7 +30,7 @@
           @change="changeValue('create', $event)"/>
         <checkbox
           :data="manualChecked.delete"
-          label="Delete"
+          label="Full Control"
           @change="changeValue('delete', $event)"/>
       </ul>
     </div>
@@ -41,7 +42,7 @@
   </div>
 </template>
 <script>
-import Checkbox from '~/components/checkbox/checkbox'
+import Checkbox from '~/components/vCheckbox'
 export default {
   name: 'TreeItem',
   components: { Checkbox },
@@ -49,6 +50,10 @@ export default {
     title: {
       type: String,
       default: 'no title'
+    },
+    subtitle: {
+      type: String,
+      default: ''
     },
     defaultChecked: {
       type: Object,
@@ -133,7 +138,13 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
+.subtitle {
+  font-size: 0.75rem;
+  text-decoration: underline;
+}
 .item {
+  user-select: none;
+
   &-title {
     cursor: pointer;
 

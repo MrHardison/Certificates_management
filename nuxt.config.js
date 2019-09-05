@@ -57,7 +57,6 @@ module.exports = {
     '~/plugins/axios',
     '~/plugins/alerts',
     '~/plugins/click-outside',
-    '~/plugins/vue-async-computed',
     '~/plugins/lodash',
     '~/plugins/order',
     '~/plugins/find',

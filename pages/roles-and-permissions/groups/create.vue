@@ -42,7 +42,7 @@
               :preloading="preloading"
               class="btn-green rounded small mr-2"
               @click.native="createGroup">
-              Create
+              Save
               <fa
                 :icon="['fal', 'plus']"
                 class="ml-2" />

@@ -21,7 +21,7 @@
               <fa
                 :icon="['fal', 'trash-alt']"
                 class="mr-2" />
-              Delete
+              Delete role
             </button-rounded>
             <button-rounded
               :preloading="preloading"

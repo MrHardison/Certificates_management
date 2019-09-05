@@ -1,6 +1,6 @@
 # wwt-web-app
 
-> WWT client-side application
+> WWT client-side application  
 
 ## Build Setup
 

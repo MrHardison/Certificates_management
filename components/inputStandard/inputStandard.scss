@@ -40,15 +40,20 @@
       border: 2px solid $secondary;
       border-radius: 0.25rem;
       color: $dark_gray;
+      padding-right: 1.75rem;
+
       &::placeholder {
         color: $secondary !important;
       }
+
       &.is-warning {
         border-color: $input_warning;
       }
+
       &.is-error {
         border-color: $input_error;
       }
+
       &.with-icon {
         padding-right: 25px;
       }

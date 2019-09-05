@@ -31,12 +31,12 @@ export default {
   },
   mounted() {
     this.$emit('showReturnButton')
-    if (this.dataViewCertificate === null) {
+    if (this.dataViewCertificate.hasOwnProperty('id')) {
+      this.render(this.dataViewCertificate.id)
+    } else {
       this.$api.dataView.getById(this.$route.params.id).then(res => {
         this.render(res.certificate.id)
       })
-    } else {
-      this.render(this.dataViewCertificate.id)
     }
   },
   methods: {

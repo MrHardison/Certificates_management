@@ -15,7 +15,7 @@
         class="form-control"
         @blur="errorsCheck">
       <div
-        v-if="value.length && clear"
+        v-if="value.length"
         class="clear">
         <fa
           :icon="['fal', 'times-circle']"
@@ -68,10 +68,6 @@ export default {
     defaultText: {
       type: String,
       default: ''
-    },
-    clear: {
-      type: Boolean,
-      default: true
     },
     computed_value: {
       type: String,
@@ -158,22 +154,7 @@ export default {
     }
   },
   mounted() {
-    if (!this.defaultText) {
-      this.value = this.computed_value
-    }
-    if (this.certId) {
-      if (this.computed_value === this.defaultText) {
-        this.value = ''
-      } else {
-        this.value = this.computed_value
-      }
-    } else if (!this.certId && this.defaultText.length) {
-      if (this.computed_value.length) {
-        this.value = this.computed_value
-      } else {
-        this.value = this.defaultText
-      }
-    }
+    this.value = this.computed_value
     this.validation()
   },
   methods: {

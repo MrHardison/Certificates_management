@@ -41,22 +41,26 @@ export default ({ app, $axios, redirect, store, route }) => {
 
   const messages = response => {
     if (response && response.data.meta) {
+      const meta = response.data.meta
       let alert = {
         group: 'alerts',
         type: 'success',
-        text: response.data.meta.message
+        text: meta.message
       }
-      if (response.data.meta.code === 10) {
+      if (meta.code === 10) {
         alert.type = 'error'
-        _.forEach(_.values(response.data.meta.message), error => {
-          _.forEach(error, item => {
-            alert.text = item
-            Vue.notify(alert)
-          })
+        Object.values(meta.message).forEach(error => {
+          error.message
+            ? error.message
+            : error.forEach(message => {
+                alert.text = message
+                Vue.notify(alert)
+              })
         })
-        return response.data.meta.message
+        return meta.message
       }
-      switch (response.data.meta.code) {
+
+      switch (meta.code) {
         case 1:
           alert.type = 'success'
           break

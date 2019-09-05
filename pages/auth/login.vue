@@ -110,7 +110,6 @@ export default {
       preloading: false
     }
   },
-
   methods: {
     ...mapMutations({ setToken: 'token/setToken' }),
     login() {

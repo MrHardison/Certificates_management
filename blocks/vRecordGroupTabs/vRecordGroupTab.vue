@@ -5,10 +5,9 @@
       :tbody="tBody"
       :tfooter="tFooter"
       :is-loading="isLoading"
-      @set_page="page = $event"
-      @search_text="search_text = $event"
-      @order_by="orderBy = $event"
-      @interval="interval = $event"/>
+      @set_page="params.page = $event"
+      @order_by="setOrderBy($event)"
+      @interval="params.interval = $event"/>
   </div>
 </template>
 
@@ -29,26 +28,20 @@ export default {
   data() {
     return {
       isLoading: false,
-      page: 1,
+      params: {
+        data_list_group_id: this.tab.data_list_group_id,
+        page: 1,
+        order_by_column: null,
+        order_by_direction: null,
+        interval: 10,
+        record_group_id: this.$route.params.id
+      },
       orderBy: {},
-      interval: 10
+      modelData: {},
+      tBody: []
     }
   },
   computed: {
-    tBody() {
-      if (!this.modelData) {
-        return []
-      }
-      let newArr = []
-      this.modelData.data.forEach(row => {
-        let tr = {
-          actions: this.generateActions(row),
-          tr: this.generateRow(row)
-        }
-        newArr.push(tr)
-      })
-      return newArr
-    },
     tFooter() {
       if (!this.modelData) {
         return {}
@@ -63,45 +56,55 @@ export default {
       }
     }
   },
-  asyncComputed: {
-    modelData() {
-      this.isLoading = true
-      if (!this.tab) {
-        this.isLoading = false
-        return {}
+  watch: {
+    params: {
+      deep: true,
+      handler(data) {
+        this.getModelData()
       }
-      const params = {
-        data_list_group_id: this.tab.data_list_group_id,
-        page: this.page,
-        order_by_column: this.orderBy.orderBy,
-        order_by_direction: this.orderBy.sortingDirection,
-        interval: this.interval,
-        record_group_id: this.$route.params.id
-      }
-      if (this.tab.model === 'certificates') {
-        return this.$api.recordGroups
-          .getCertificatesById(this.$route.params.id, params)
-          .then(res => {
-            return res
-          })
-          .finally(() => {
-            this.isLoading = false
-          })
-      } else if (this.tab.model === 'record_groups') {
-        return this.$api.recordGroups
-          .get(params)
-          .then(res => {
-            return res
-          })
-          .finally(() => {
-            this.isLoading = false
-          })
-      }
-      this.isLoading = false
-      return {}
     }
   },
+  mounted() {
+    this.getModelData()
+  },
   methods: {
+    getModelData() {
+      this.isLoading = true
+      if (this.tab) {
+        if (this.tab.model === 'certificates') {
+          this.$api.recordGroups
+            .getCertificatesById(this.$route.params.id, this.params)
+            .then(res => {
+              this.modelData = res
+              this.generateTBody()
+            })
+            .finally(() => {
+              this.isLoading = false
+            })
+        } else if (this.tab.model === 'record_groups') {
+          this.$api.recordGroups
+            .get(this.params)
+            .then(res => {
+              this.modelData = res
+              this.generateTBody()
+            })
+            .finally(() => {
+              this.isLoading = false
+            })
+        }
+      }
+    },
+    generateTBody() {
+      let newArr = []
+      this.modelData.data.forEach(row => {
+        let tr = {
+          actions: this.generateActions(row),
+          tr: this.generateRow(row)
+        }
+        newArr.push(tr)
+      })
+      this.tBody = newArr
+    },
     generateActions(row) {
       let actions = []
       this.$order(this.tab.body_rules.actions).forEach(item => {
@@ -130,6 +133,10 @@ export default {
         columns.push(col)
       })
       return columns
+    },
+    setOrderBy(orderBy) {
+      this.params.order_by_column = orderBy.orderBy
+      this.params.order_by_direction = orderBy.sortingDirection
     }
   }
 }

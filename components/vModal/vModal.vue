@@ -125,7 +125,6 @@ export default {
   height: 100vh;
   z-index: 1;
 }
-
 .close {
   cursor: pointer;
   color: red;

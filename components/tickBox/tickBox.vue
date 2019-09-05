@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import checkbox from '~/components/checkbox'
+import checkbox from '~/components/vCheckbox'
 
 export default {
   name: 'TickBox',

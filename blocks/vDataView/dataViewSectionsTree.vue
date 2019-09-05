@@ -28,8 +28,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-
 export default {
   name: 'DataViewSectionsTree',
   props: {
@@ -50,7 +48,6 @@ export default {
     }
   },
   computed: {
-    ...mapGetters({ getSectionsStatus: 'dataView/getSectionsStatus' }),
     isFolder() {
       return this.item.children && this.item.children.length
     }

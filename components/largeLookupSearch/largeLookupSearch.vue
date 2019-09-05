@@ -1,11 +1,16 @@
 <template>
   <div>
-    <input-standard
-      :computed_value="selectedLookupTitle"
-      :search_icon="true"
-      :class="{filled: selectedLookupTitle.length}"
-      class="lookup"
-      @click.native="showLookupModal = true" />
+    <div class="lookup-wrapper">
+      <input-lookup
+        :prop-value="selectedLookupTitle"
+        :class="{filled: selectedLookupTitle.length}"
+        @click.native="showLookupModal = true" />
+      <fa
+        v-if="selectedLookupTitle.length"
+        :icon="['fal', 'times-circle']"
+        class="clear-lookup"
+        @click="clearLookup" />
+    </div>
     <div
       v-if="error"
       class="error-message">This field is required</div>
@@ -14,10 +19,11 @@
       header="Select lookup"
       @close="closeLookupModal">
       <div slot="body">
-        <multi-lookup-selector
+        <large-lookup-selector
+          :parent-element="parentElement"
           :options="recordLookups"
           :is-loading="isLoading"
-          :default-selected="selectedItems"
+          :default-selected="selectedLookup"
           @searchText="searchText = $event"
           @selectedParentItem="selectedParentItem = $event"
           @deleteCustomLookup="deleteCustomLookup($event)"
@@ -46,7 +52,7 @@
       v-if="needToSelectParentModal"
       header="Warning">
       <template slot="body">
-        Please select {{ parentElement.data }}
+        Please select {{ parentElement.name }}
       </template>
       <div
         slot="footer"
@@ -87,25 +93,19 @@
 import { mapMutations, mapGetters } from 'vuex'
 import VModal from '~/components/vModal/vModal'
 import ButtonRounded from '~/components/buttonRounded/'
-import InputStandard from '~/components/inputStandard/'
-import multiLookupSelector from './multiLookupSelector'
+import inputLookup from '~/components/inputLookup'
+import largeLookupSelector from './largeLookupSelector'
 
 export default {
-  name: 'MultiLookupSearch',
+  name: 'LargeLookupSearch',
   components: {
-    multiLookupSelector,
-    InputStandard,
+    largeLookupSelector,
     VModal,
-    ButtonRounded
+    ButtonRounded,
+    inputLookup
   },
   props: {
-    parentElement: {
-      type: Object,
-      default() {
-        return {}
-      }
-    },
-    selectedLookup: {
+    parentData: {
       type: Object,
       default() {
         return {}
@@ -128,6 +128,7 @@ export default {
     return {
       searchText: '',
       selectedItems: [],
+      selectedLookup: {},
       showLookupModal: false,
       needToSelectParentModal: false,
       deleteLookupModal: false,
@@ -136,6 +137,7 @@ export default {
       childRecordLookupIds: [],
       selectedChildRecordLookupid: 0,
       selectedParentItem: null,
+      selectedLookupTitle: '',
       isLoading: false,
       params: {
         data_list_default_id: this.dataListDefaultId,
@@ -159,21 +161,6 @@ export default {
     }
   },
   computed: {
-    selectedLookupTitle() {
-      let title = ''
-      let titles = []
-      const selectedLookups = [
-        ...this.selectedLookup.record_lookups_system,
-        ...this.selectedLookup.record_lookups_custom
-      ]
-      selectedLookups.forEach(i => {
-        titles.push(i.title)
-      })
-      if (titles.length) {
-        title = titles.join(', ')
-      }
-      return title
-    },
     getLookupItems() {
       let items = []
       const selectedLookups = [
@@ -184,19 +171,38 @@ export default {
         items = _.intersectionBy(this.recordLookups, selectedLookups, 'id')
       }
       return items
+    },
+    parentElement() {
+      const parentFormElement = this.$getLookupParent(
+        this.parentData.form,
+        this.parentData.id
+      )
+      if (_.isEmpty(parentFormElement)) {
+        return {}
+      } else {
+        const parentCertElement = this.$certificateElementById(
+          this.parentData.cert,
+          parentFormElement.id
+        )
+        let obj = _.cloneDeep(parentCertElement)
+        obj.name = parentFormElement.name
+        return obj
+      }
     }
   },
   watch: {
     showLookupModal: {
+      deep: true,
       handler(data) {
-        if (this.parentElement.hasOwnProperty('id')) {
-          if (data) {
-            if (this.parentElement.data.length) {
+        if (data) {
+          this.recordLookups = []
+          if (this.parentElement.hasOwnProperty('data')) {
+            if (this.parentElement.data && this.parentElement.data.length) {
               this.childRecordLookupIds = [
                 // eslint-disable-next-line
-                ...parentElement.record_lookups_custom.map(e => e,record_type = 'custom'),
+                ...this.parentElement.record_lookups_custom.map(i => ({ ...i, record_type: 'custom' })),
                 // eslint-disable-next-line
-                ...parentElement.record_lookups_custom.map(e => e,record_type = 'system')
+                ...this.parentElement.record_lookups_system.map(i => ({ ...i, record_type: 'system' }))
               ]
               this.getRecordLookups()
             } else {
@@ -204,22 +210,33 @@ export default {
               this.needToSelectParentModal = true
             }
           } else {
-            this.recordLookups = []
+            this.getRecordLookups()
           }
         }
+      }
+    },
+    parentData: {
+      deep: true,
+      handler(data) {
+        this.selectedLookup = this.$certificateElementById(
+          data.cert,
+          data.formId
+        )
+        this.setLookupTitle()
       }
     }
   },
   mounted() {
-    if (!this.parentElement.hasOwnProperty('id')) {
-      this.getRecordLookups()
+    this.selectedLookup = this.$certificateElementById(
+      this.parentData.cert,
+      this.parentData.formId
+    )
+    this.setLookupTitle()
+    if (!this.selectedLookup.data) {
+      this.errorRequired(true)
+    } else {
+      this.errorRequired(false)
     }
-    console.log(this.selectedLookup)
-    // if (!this.computedValue.length) {
-    //   this.errorRequired(true)
-    // } else {
-    //   this.errorRequired(false)
-    // }
   },
   methods: {
     ...mapGetters({ getDataListDefaults: 'dataListItems/getDataListDefaults' }),
@@ -229,8 +246,7 @@ export default {
     }),
     getRecordLookups() {
       this.isLoading = true
-      this.recordLookups = []
-      if (this.childRecordLookupIds.length > 0) {
+      if (this.childRecordLookupIds.length) {
         if (this.params.page === 1) {
           this.params.record_lookup_id = this.childRecordLookupIds[
             this.selectedChildRecordLookupid
@@ -242,22 +258,22 @@ export default {
         this.$api.recordLookups
           .getRecordLookups(this.params)
           .then(res => {
-            res.data.forEach(item => {
-              this.recordLookups.push(item)
-            })
-            if (res.next_page_url !== null) {
-              ++this.params.page
-              this.getRecordLookups()
-            } else {
-              if (
-                this.selectedChildRecordLookupid <
-                this.childRecordLookupIds.length - 1
-              ) {
-                ++this.selectedChildRecordLookupid
-                this.params.page = 1
+            if (res.hasOwnProperty('data')) {
+              this.recordLookups = [...this.recordLookups, ...res.data]
+              if (res.next_page_url !== null) {
+                ++this.params.page
                 this.getRecordLookups()
               } else {
-                this.selectedChildRecordLookupid = 0
+                if (
+                  this.selectedChildRecordLookupid <
+                  this.childRecordLookupIds.length - 1
+                ) {
+                  ++this.selectedChildRecordLookupid
+                  this.params.page = 1
+                  this.getRecordLookups()
+                } else {
+                  this.selectedChildRecordLookupid = 0
+                }
               }
             }
           })
@@ -265,6 +281,7 @@ export default {
             this.isLoading = false
           })
       } else {
+        this.recordLookups = []
         this.$api.recordLookups
           .getRecordLookups(this.params)
           .then(res => {
@@ -288,7 +305,10 @@ export default {
         data: '',
         title: '',
         id: [],
-        type: []
+        type: [],
+        clear: _.isEmpty(this.parentElement) ? true : false,
+        dataListDefaultId: this.dataListDefaultId,
+        size: 'large'
       }
       this.selectedItems.forEach((item, index) => {
         data.data = index === 0 ? `${item.data}` : `${data.data}, ${item.data}`
@@ -306,29 +326,17 @@ export default {
       this.itemToDelete = {}
     },
     createCustomLookup() {
-      return console.log('create')
-      if (!this.preloading) {
-        this.preloading = true
-        if (this.selectedParentItem) {
+      if (this.selectedParentItem) {
+        if (!this.preloading) {
+          this.preloading = true
           this.createLookupParams.record_lookup_id = null
           this.createLookupParams.data = this.searchText
+          this.createLookupParams.title = this.searchText
           if (this.selectedParentItem !== true) {
             this.createLookupParams.record_lookup_id = this.selectedParentItem
-            const parentSystemLookup = _.find(
-              this.getCertificateParentElement.record_lookups_system,
-              {
-                id: this.selectedParentItem
-              }
-            )
-            const parentCustomLookup = _.find(
-              this.getCertificateParentElement.record_lookups_custom,
-              {
-                id: this.selectedParentItem
-              }
-            )
-            if (parentSystemLookup) {
+            if (this.parentElement.record_lookups_system.length) {
               this.createLookupParams.record_lookup_type = 'system'
-            } else if (parentCustomLookup) {
+            } else if (this.parentElement.record_lookups_custom.length) {
               this.createLookupParams.record_lookup_type = 'custom'
             }
           }
@@ -338,7 +346,6 @@ export default {
               _.delay(() => {
                 this.preloading = false
               }, 1000)
-              this.recordLookups = []
               this.getRecordLookups()
             })
         }
@@ -358,9 +365,32 @@ export default {
               this.deletePreloading = false
             }, 1000)
             this.deleteLookupModal = false
-            this.recordLookups = []
             this.getRecordLookups()
           })
+      }
+    },
+    setLookupTitle() {
+      let titles = []
+      if (!_.isEmpty(this.selectedLookup)) {
+        const titlesArray = array => {
+          titles = [...titles, ...array]
+        }
+        titlesArray(this.selectedLookup.record_lookups_system)
+        titlesArray(this.selectedLookup.record_lookups_custom)
+        titles = titles.map(t => t.title)
+        if (titles.length) {
+          this.selectedLookupTitle = titles.join(', ')
+        } else {
+          this.selectedLookupTitle = ''
+        }
+      }
+    },
+    clearLookup() {
+      this.$emit('clearLookup', 'large')
+      if (!this.selectedLookup.data) {
+        this.errorRequired(true)
+      } else {
+        this.errorRequired(false)
       }
     },
     errorRequired(isError) {
@@ -378,6 +408,24 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.lookup-wrapper {
+  position: relative;
+
+  .clear-lookup {
+    color: red;
+    cursor: pointer;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.2s ease-in-out;
+    z-index: 2;
+
+    &:hover {
+      transform: translateY(-50%) scale(1.3);
+    }
+  }
+}
 .error-message {
   color: red;
   font-size: 14px;

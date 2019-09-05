@@ -56,7 +56,7 @@ import VTable from '~/components/table/vTable'
 import ButtonRounded from '~/components/buttonRounded/buttonRounded'
 import VModal from '~/components/vModal/vModal'
 export default {
-  name: 'Name',
+  name: 'Users',
   components: { VModal, ButtonRounded, VTable },
   props: {
     rules: {

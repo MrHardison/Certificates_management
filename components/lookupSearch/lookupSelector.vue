@@ -35,7 +35,7 @@
               {{ option.title }}
             </div>
             <div
-              v-if="option.record_type === 'custom' && option.id !== defaultSelected.id"
+              v-if="option.record_type === 'custom' && option.id !== selectedItemId"
               class="delete-lookup"
               @click="deleteCustomLookup(option)">
               <fa
@@ -100,14 +100,21 @@ export default {
     }
   },
   mounted() {
-    const system = this.defaultSelected.record_lookups_system
-    const custom = this.defaultSelected.record_lookups_custom
-    if (system.length) {
-      this.selectedItemType = 'system'
-      this.selectedItemId = system[0].id
-    } else if (custom.length) {
-      this.selectedItemType = 'custom'
-      this.selectedItemId = custom[0].id
+    if (this.defaultSelected.hasOwnProperty('type')) {
+      if (typeof this.defaultSelected.type === 'object') {
+        this.selectedItemType = this.defaultSelected.type[0]
+        this.selectedItemId = this.defaultSelected.id[0]
+      }
+    } else {
+      const system = this.defaultSelected.record_lookups_system
+      const custom = this.defaultSelected.record_lookups_custom
+      if (system.length) {
+        this.selectedItemType = 'system'
+        this.selectedItemId = system[0].id
+      } else if (custom.length) {
+        this.selectedItemType = 'custom'
+        this.selectedItemId = custom[0].id
+      }
     }
   },
   methods: {

@@ -83,7 +83,7 @@
 </template>
 
 <script>
-import Checkbox from '~/components/checkbox'
+import Checkbox from '~/components/vCheckbox'
 import InputStandard from '~/components/inputStandard'
 import FormTree from './formTree'
 import TreeItem from '~/blocks/vRole/treeItem'
@@ -162,7 +162,8 @@ export default {
         data_groups: this.checkedDataGroups,
         forms: this.forms,
         form_categories: this.formCategories,
-        interface_restriction: this.role.interface_restriction
+        interface_restriction: this.role.interface_restriction,
+        own_certificates: this.role.own_certificates
       }
     }
   },

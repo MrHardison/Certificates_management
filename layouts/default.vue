@@ -55,17 +55,24 @@ export default {
         .catch(err => {
           console.warn('Error detected, please contact the administrator')
         })
-      Promise.all([ui, user]).finally(() => {
-        this.showPreloader = false
-        this.$sentry.configureScope(scope => {
-          scope.setUser({
-            username: this.user.properties.user_full_name || 'username',
-            email: this.user.email,
-            id: this.user.id,
-            company_id: this.user.company.id
-          })
+      Promise.all([ui, user])
+        .then(() => {
+          if (this.$sentry) {
+            this.$sentry.configureScope(scope => {
+              scope.setUser({
+                username: this.user.properties.user_full_name || 'username',
+                email: this.user.email,
+                id: this.user.id,
+                company_id: this.user.company.id
+              })
+            })
+          }
         })
-      })
+        .finally(() => {
+          this.showPreloader = false
+        })
+    } else {
+      this.$router.push('/auth/login')
     }
   },
   methods: {

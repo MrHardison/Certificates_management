@@ -200,11 +200,15 @@ export default {
         Promise.all([
           this.$api.user.update(this.user),
           this.$api.company.update(this.company)
-        ]).then(() => {
-          _.delay(() => {
+        ])
+          .then(() => {
+            _.delay(() => {
+              this.preloading = false
+            }, 1000)
+          })
+          .finally(() => {
             this.preloading = false
-          }, 1000)
-        })
+          })
       }
     }
   }

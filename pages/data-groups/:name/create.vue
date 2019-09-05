@@ -46,7 +46,7 @@
             :preloading="preloading"
             class="btn-green rounded small mr-2 preloading-mr0"
             @click.native="addRecord">
-            Add
+            Save
             <fa
               :icon="['fal', 'plus']"
               class="ml-2" />

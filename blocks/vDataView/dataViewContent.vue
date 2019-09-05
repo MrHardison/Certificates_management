@@ -53,13 +53,13 @@
               :description="element.rules.description || element.name"
               :name="element.name" />
             <lookup-search
+              :parent-data="{id: element.form_section_element_id, formId: element.id, form: formSection, cert: certificateSection}"
+              :data-list-default-id="element.data_list_default_id"
               :message="element.rules.message"
               :required="element.rules.required"
               :description="element.rules.description"
-              :selected-lookup="getCertificateElement(element.id)"
-              :parent-element="getLookupParent(element.form_section_element_id)"
-              :data-list-default-id="element.data_list_default_id"
               @validationError="$emit('validationError', $event)"
+              @clearLookup="clearLookup(element.id, element.data_list_default_id, $event)"
               @setData="setLookup(element.id, $event)" />
           </template>
           <!-- Canvas -->
@@ -85,7 +85,7 @@
               :name="`${element.name}_${element.id}`"
               :element-id="element.id"
               :options="element.rules.options"
-              :selected="getCertificateElement(element.id).data"
+              :selected="getCertificateElement(element.id).data ? getCertificateElement(element.id).data : ''"
               :required="element.rules.required"
               @change="getCertificateElement(element.id).data = $event"
               @validationError="$emit('validationError', $event)" />
@@ -187,14 +187,14 @@
             <uiLabel
               :description="element.rules.description || element.name"
               :name="element.name" />
-            <multi-lookup-search
+            <large-lookup-search
+              :parent-data="{id: element.form_section_element_id, formId: element.id, form: formSection, cert: certificateSection}"
+              :data-list-default-id="element.data_list_default_id"
               :message="element.rules.message"
               :required="element.rules.required"
               :description="element.rules.description"
-              :selected-lookup="getCertificateElement(element.id)"
-              :parent-element="getLookupParent(element.form_section_element_id)"
-              :data-list-default-id="element.data_list_default_id"
               @validationError="$emit('validationError', $event)"
+              @clearLookup="clearLookup(element.id, element.data_list_default_id, $event)"
               @setData="setLookup(element.id, $event)" />
           </template>
         </div>
@@ -208,17 +208,17 @@
 </template>
 <script>
 import { mapGetters, mapMutations } from 'vuex'
-import Checkbox from '~/components/checkbox/checkbox'
-import InputStandard from '~/components/inputStandard/inputStandard'
+import Checkbox from '~/components/vCheckbox'
+import InputStandard from '~/components/inputStandard'
 import vTextarea from '~/components/vTextarea/vTextarea'
 import vRadio from '~/components/vRadio/vRadio'
-import ButtonRounded from '~/components/buttonRounded/buttonRounded'
+import ButtonRounded from '~/components/buttonRounded'
 import SpinnerLoader from '~/components/spinerLoader'
 import DatePicker from '~/components/datePicker'
 import canvasSignature from '~/components/canvasSignature'
 import DataGroupSearch from '~/components/dataGroupSearch'
 import lookupSearch from '~/components/lookupSearch'
-import multiLookupSearch from '~/components/multiLookupSearch'
+import largeLookupSearch from '~/components/largeLookupSearch'
 import TickBox from '~/components/tickBox'
 import Dropdown from '~/components/dropdown'
 import imageLoader from '~/components/imageLoader'
@@ -233,7 +233,7 @@ export default {
     Dropdown,
     DataGroupSearch,
     lookupSearch,
-    multiLookupSearch,
+    largeLookupSearch,
     Checkbox,
     ButtonRounded,
     InputStandard,
@@ -284,7 +284,9 @@ export default {
   },
   computed: {
     ...mapGetters({
-      dataListGroups: 'dataListItems/getDataListGroups'
+      dataListGroups: 'dataListItems/getDataListGroups',
+      dataListDefaults: 'dataListItems/getDataListDefaults',
+      getSelectedOptions: 'dataView/getOldLookupSelectedOptions'
     }),
     currentRecordGroupId() {
       return this.certificateSection.record_group_id
@@ -312,37 +314,58 @@ export default {
     // }
   },
   methods: {
-    getLookupParent(id) {
-      const parentFormElement = this.$getLookupParent(
-        this.selectedFormSection,
-        id
-      )
-      if (!parentFormElement) {
-        return {}
-      } else {
-        const parentCertElement = this.$certificateElementById(
-          this.selectedCertSection,
-          parentFormElement.id
-        )
-        return parentCertElement
-      }
-    },
+    ...mapMutations({
+      setOldSelectedOptions: 'dataView/setOldLookupSelectedOptions',
+      clearOldSelectedOptions: 'dataView/clearOldLookupSelectedOptions'
+    }),
     setNewRecordGroup(data) {
       this.certificateSection.elements = this.certificateSection.elements.map(
         element => {
           element.record_group_id = null
           element.data = ''
+          element.record_lookups_system = []
+          element.record_lookups_custom = []
           return element
         }
       )
+      this.certificateSection.record_group = {
+        data: { ...data['child.data'] },
+        archive: data['child.archive'],
+        data_list_group_id: data['child.data_list_group_id'],
+        id: data['child.id'],
+        record_lookups_system: data.record_lookups_system,
+        record_lookups_custom: data.record_lookups_custom
+      }
       this.certificateSection.record_group_id = data['child.id']
       this.formSection.elements.forEach(e => {
         if (e.rules.field_name) {
           const certElement = this.certificateSection.elements.find(
             el => el.form_section_element_id === e.id
           )
-          certElement.data = data['child.data'][e.rules.field_name]
+          if (data['child.data'][e.rules.field_name]) {
+            certElement.data = data['child.data'][e.rules.field_name]
+          }
           certElement.record_group_id = data['child.id']
+
+          const fillLookupsArray = type => {
+            const computedType = `record_lookups_${type}`
+            data[computedType].forEach(i => {
+              if (e.data_list_default_id === i.data_list_default_id) {
+                certElement[computedType].push(i)
+                let match = this.certificateSection.record_group[
+                  computedType
+                ].find(e => e.data_list_default_id === i.data_list_default_id)
+                if (match) {
+                  match = i
+                } else {
+                  this.certificateSection.record_group[computedType].push(i)
+                }
+              }
+            })
+          }
+
+          fillLookupsArray('system')
+          fillLookupsArray('custom')
         }
       })
     },
@@ -359,9 +382,11 @@ export default {
           id: item,
           data: dataArray[index],
           title: titleArray[index],
-          record_type: data.type[index]
+          record_type: data.type[index],
+          data_list_default_id: data.dataListDefaultId
         })
       })
+      this.resetChildLookup(data)
     },
     getCertificateElement(form_section_id) {
       return this.$certificateElementById(
@@ -390,6 +415,139 @@ export default {
       if (element.data_list_group_id) {
         this.openDataGroupSearch = true
       }
+    },
+    resetChildLookup({ size, dataListDefaultId, full }) {
+      const childDataListElement = this.dataListDefaults.data.find(
+        e => e.data_list_default_id === dataListDefaultId
+      )
+
+      if (size === 'single') {
+        if (childDataListElement) {
+          const formSectionElement = this.formSection.elements.find(
+            e => e.data_list_default_id === childDataListElement.id
+          )
+          if (formSectionElement) {
+            const certSectionElement = this.$certificateElementById(
+              this.certificateSection,
+              formSectionElement.id
+            )
+            certSectionElement.data = ''
+            certSectionElement.title = ''
+            certSectionElement.record_lookups_system = []
+            certSectionElement.record_lookups_custom = []
+            this.resetChildLookup({
+              size,
+              dataListDefaultId: formSectionElement.data_list_default_id
+            })
+          }
+        }
+      } else if (size === 'large') {
+        const old = {
+          system: this.getSelectedOptions.record_lookups_system,
+          custom: this.getSelectedOptions.record_lookups_custom
+        }
+        if (childDataListElement) {
+          const childFormElement = this.formSection.elements.find(
+            e => e.data_list_default_id === childDataListElement.id
+          )
+          if (childFormElement) {
+            const parentFormElement = this.formSection.elements.find(
+              e => childFormElement.form_section_element_id === e.id
+            )
+            if (parentFormElement && childFormElement) {
+              const parentCertElement = this.$certificateElementById(
+                this.certificateSection,
+                parentFormElement.id
+              )
+              const childCertElement = this.$certificateElementById(
+                this.certificateSection,
+                childFormElement.id
+              )
+
+              const clearOptions = (deletedOptions, type) => {
+                console.log(deletedOptions)
+                if (deletedOptions.length) {
+                  deletedOptions.forEach(option => {
+                    this.$api.recordLookups
+                      .getRecordLookups({
+                        data_list_default_id:
+                          childFormElement.data_list_default_id,
+                        page: 1,
+                        search_text: '',
+                        interval: 1000,
+                        record_lookup_id: option.id,
+                        record_lookup_type: type
+                      })
+                      .then(res => {
+                        let deleteIds = []
+                        res.data.forEach(childLookup => {
+                          const el = childCertElement[
+                            `record_lookups_${type}`
+                          ].filter(e => e.id === childLookup.id)
+                          deleteIds = [...deleteIds, ...el]
+                        })
+                        let childCertElementData = childCertElement.data.split(
+                          ', '
+                        )
+                        deleteIds.forEach(item => {
+                          _.remove(
+                            childCertElement[`record_lookups_${type}`],
+                            i => {
+                              return i.id === item.id
+                            }
+                          )
+                          _.remove(childCertElementData, i => {
+                            return i === item.data
+                          })
+                        })
+                        childCertElement.data = childCertElementData.join(', ')
+                      })
+                  })
+                }
+              }
+
+              if (parentCertElement && childCertElement) {
+                const deletedSystemOptions = _.differenceBy(
+                  old.system,
+                  parentCertElement.record_lookups_system,
+                  'id'
+                )
+                const deletedCustomOptions = _.differenceBy(
+                  old.custom,
+                  parentCertElement.record_lookups_custom,
+                  'id'
+                )
+                if (full) {
+                  childCertElement.data = ''
+                  childCertElement.record_lookups_system = []
+                  childCertElement.record_lookups_custom = []
+                } else {
+                  // eslint-disable-next-line
+                  clearOptions(deletedSystemOptions, 'system')
+                  // eslint-disable-next-line
+                  clearOptions(deletedCustomOptions, 'custom')
+                }
+              }
+              // Infinity recursion
+              // this.resetChildLookup({
+              //   size,
+              //   dataListDefaultId: parentFormElement.data_list_default_id
+              // })
+            }
+          }
+        }
+      }
+    },
+    clearLookup(id, dataListDefaultId, size) {
+      const element = this.getCertificateElement(id)
+      element.data = ''
+      element.record_lookups_system = []
+      element.record_lookups_custom = []
+      this.resetChildLookup({
+        size,
+        dataListDefaultId,
+        full: size === 'large' ? true : false
+      })
     },
     checkValidationErrors(error) {
       if (!error.status) {

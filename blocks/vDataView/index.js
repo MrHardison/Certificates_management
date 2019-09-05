@@ -1,5 +1,11 @@
 import dataViewTitle from './dataViewTitle'
-import dataViewContainer from './dataViewContainer'
+import dataViewContent from './dataViewContent'
+import dataViewSections from './dataViewSections'
 import dataViewSectionsTree from './dataViewSectionsTree'
 
-export { dataViewContainer, dataViewTitle, dataViewSectionsTree }
+export {
+  dataViewTitle,
+  dataViewSections,
+  dataViewSectionsTree,
+  dataViewContent
+}

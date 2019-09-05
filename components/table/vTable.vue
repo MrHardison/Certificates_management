@@ -2,6 +2,7 @@
   <div class="card">
     <v-thead
       :enable-header="enableHeader"
+      :header-title="headerTitle"
       @search_text="searchText($event)"
       @interval="updateInterval($event)">
       <template slot="header">
@@ -39,6 +40,10 @@ export default {
     enableHeader: {
       type: Boolean,
       default: false
+    },
+    headerTitle: {
+      type: String,
+      default: ''
     },
     thead: {
       type: Array,

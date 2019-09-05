@@ -3,514 +3,425 @@ export default (ctx, inject) => {
 
   const plugin = {
     menu: {
-      ui(params = {}) {
-        return $axios
-          .get('/ui', params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err.response
-          })
+      async ui(params = {}) {
+        try {
+          const res = await $axios.get('/ui', params)
+          return res.data.data
+        } catch (e) {
+          return e.response
+        }
       }
     },
     auth: {
-      login(params = {}) {
-        return $axios
-          .post('/auth/login', params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err.response
-          })
+      async login(params = {}) {
+        try {
+          const res = await $axios.post('/auth/login', params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      logout(params = {}) {
-        return $axios
-          .post('/auth/logout', params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err.response
-          })
+      async logout(params = {}) {
+        try {
+          const res = await $axios.post('/auth/logout', params)
+          return res.data.data
+        } catch (e) {
+          return e.response
+        }
       },
-      register(params = {}) {
-        return $axios
-          .put('/auth/register', params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err.response
-          })
+      async register(params = {}) {
+        try {
+          const res = await $axios.put('/auth/register', params)
+          return res.data.data
+        } catch (e) {
+          return e.response
+        }
       },
-      reset(params = {}) {
-        return $axios
-          .post('/auth/reset', params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err.response
-          })
+      async reset(params = {}) {
+        try {
+          const res = await $axios.post('/auth/reset', params)
+          return res.data.data
+        } catch (e) {
+          return e.response
+        }
       },
-      restore(params = {}) {
-        return $axios
-          .post('/auth/reset/token', params)
-          .then(res => {
-            return res.data.meta
-          })
-          .catch(err => {
-            return err.response
-          })
+      async restore(params = {}) {
+        try {
+          const res = await $axios.post('/auth/reset/token', params)
+          return res.data.meta
+        } catch (e) {
+          return e.response
+        }
       }
     },
     user: {
-      get(params = {}) {
-        return $axios
-          .get('/user', params)
-          .then(res => {
-            return res.data.data
-          })
-          .then(err => {
-            return err
-          })
+      async get(params = {}) {
+        try {
+          const res = await $axios.get('/user', params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      update(params = {}) {
-        return $axios
-          .post('/user', params)
-          .then(res => {
-            return res.data.data
-          })
-          .then(err => {
-            return err
-          })
+      async update(params = {}) {
+        try {
+          const res = await $axios.post('/user', params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       }
     },
     company: {
-      get(params = {}) {
-        return $axios
-          .get('/company', params)
-          .then(res => {
-            return res.data.data
-          })
-          .then(err => {
-            return err
-          })
+      async get(params = {}) {
+        try {
+          const res = await $axios.get('/company', params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      update(params = {}) {
-        return $axios
-          .post('/company', params)
-          .then(res => {
-            return res.data.data
-          })
-          .then(err => {
-            return err
-          })
+      async update(params = {}) {
+        try {
+          const res = await $axios.post('/company', params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       }
     },
     dataView: {
-      get(params = {}) {
-        return $axios
-          .get('/data-view', { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async get(params = {}) {
+        try {
+          const res = await $axios.get('/data-view', { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      create(params = {}) {
-        return $axios
-          .get('/data-view/create', { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async create(params = {}) {
+        try {
+          const res = await $axios.get('/data-view/create', { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      getById(id, params = {}) {
-        return $axios
-          .get(`/data-view/${id}`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async getById(id, params = {}) {
+        try {
+          const res = await $axios.get(`/data-view/${id}`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      update(id, params = {}) {
-        return $axios
-          .post(`/data-view/${id}`, params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async update(id, params = {}) {
+        try {
+          const res = await $axios.post(`/data-view/${id}`, params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      deleteById(id, params = {}) {
-        return $axios
-          .delete(`/data-view/${id}`, params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async deleteById(id, params = {}) {
+        try {
+          const res = await $axios.delete(`/data-view/${id}`, params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      render(id) {
-        return $axios
-          .get(`/data-view/render/${id}`, {
+      async render(id) {
+        try {
+          const res = await $axios.get(`/data-view/render/${id}`, {
             headers: {
               Accept: 'application/pdf'
             },
             responseType: 'arraybuffer'
           })
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
+          return res
+        } catch (e) {
+          return e
+        }
       },
-      store(params = {}) {
-        return $axios
-          .put('/data-view', params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async store(params = {}) {
+        try {
+          const res = await $axios.put('/data-view', params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       }
     },
     recordGroups: {
-      get(params = {}) {
-        return $axios
-          .get('/record-groups', { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async get(params = {}) {
+        try {
+          const res = await $axios.get('/record-groups', { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      getById(id, params = {}) {
-        return $axios
-          .get(`/record-groups/${id}`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async getById(id, params = {}) {
+        try {
+          const res = await $axios.get(`/record-groups/${id}`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      getCertificatesById(id, params = {}) {
-        return $axios
-          .get(`/record-groups/${id}/certificates`, { params })
-          .then(res => {
-            return res.data.data
+      async getCertificatesById(id, params = {}) {
+        try {
+          const res = await $axios.get(`/record-groups/${id}/certificates`, {
+            params
           })
-          .catch(err => {
-            return err
-          })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      deleteById(id, params = {}) {
-        return $axios
-          .delete(`/record-groups/${id}`, { params })
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
+      async deleteById(id, params = {}) {
+        try {
+          const res = await $axios.delete(`/record-groups/${id}`, { params })
+          return res
+        } catch (e) {
+          return e
+        }
       },
-      updateById(id, params = {}) {
-        return $axios
-          .post(`/record-groups/${id}`, params)
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
+      async updateById(id, params = {}) {
+        try {
+          const res = await $axios.post(`/record-groups/${id}`, params)
+          return res
+        } catch (e) {
+          return e
+        }
       },
-      add(params = {}) {
-        return $axios
-          .put(`/record-groups/`, params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async add(params = {}) {
+        try {
+          const res = await $axios.put(`/record-groups/`, params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       }
     },
     recordLookups: {
-      getRecordLookups(params = {}) {
-        return $axios
-          .get(`/record-lookups/`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async getRecordLookups(params = {}) {
+        try {
+          const res = await $axios.get(`/record-lookups/`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      updateRecordLookups(id, params = {}) {
-        return $axios
-          .post(`/record-lookups/${id}`, params)
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
+      async updateRecordLookups(id, params = {}) {
+        try {
+          const res = await $axios.post(`/record-lookups/${id}`, params)
+          return res
+        } catch (e) {
+          return e
+        }
       },
-      createRecordLookups(params = {}) {
-        return $axios
-          .put(`/record-lookups/custom`, params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async createRecordLookups(params = {}) {
+        try {
+          const res = await $axios.put(`/record-lookups/custom`, params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      deleteRecordLookups(id) {
-        return $axios
-          .delete(`/record-lookups/custom/${id}`)
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
+      async deleteRecordLookups(id) {
+        try {
+          const res = await $axios.delete(`/record-lookups/custom/${id}`)
+          return res
+        } catch (e) {
+          return e
+        }
       }
     },
     dataListDefaults: {
-      getDataListDefaults(params = {}) {
-        return $axios
-          .get(`/data-list-defaults`, params)
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async getDataListDefaults(params = {}) {
+        try {
+          const res = await $axios.get(`/data-list-defaults`, params)
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       }
     },
     dataGroups: {
-      dataListGroups(params = {}) {
-        return $axios
-          .get(`/data-list-groups/`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async dataListGroups(params = {}) {
+        try {
+          const res = await $axios.get(`/data-list-groups/`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      getById(id, params = {}) {
-        return $axios
-          .get(`/data-list-groups/${id}`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async getById(id, params = {}) {
+        try {
+          const res = await $axios.get(`/data-list-groups/${id}`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       }
     },
     roles: {
-      get(params = {}) {
-        return $axios
-          .get(`/roles`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
-      },
-      deleteById(id, params = {}) {
-        return $axios
-          .delete(`/roles/${id}`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
-      },
-      getById(id, params = {}) {
-        return $axios
-          .get(`/roles/${id}`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
-      },
-      updateById(id, params = {}) {
-        return $axios
-          .post(`/roles/${id}`, params)
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
-      },
-      getCreate(params = {}) {
-        return $axios.get(`/roles/create`, { params }).then(res => {
+      async get(params = {}) {
+        try {
+          const res = await $axios.get(`/roles`, { params })
           return res.data.data
-        })
+        } catch (e) {
+          return e
+        }
       },
-      create(params = {}) {
-        return $axios
-          .put(`/roles`, params)
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
+      async deleteById(id, params = {}) {
+        try {
+          const res = await $axios.delete(`/roles/${id}`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
+      },
+      async getById(id, params = {}) {
+        try {
+          const res = await $axios.get(`/roles/${id}`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
+      },
+      async updateById(id, params = {}) {
+        try {
+          const res = await $axios.post(`/roles/${id}`, params)
+          return res
+        } catch (e) {
+          return e
+        }
+      },
+      async getCreate(params = {}) {
+        try {
+          const res = await $axios.get(`/roles/create`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
+      },
+      async create(params = {}) {
+        try {
+          const res = await $axios.put(`/roles`, params)
+          return res
+        } catch (e) {
+          return e
+        }
       }
     },
     users: {
-      get(params = {}) {
-        return $axios
-          .get(`/users`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async get(params = {}) {
+        try {
+          const res = await $axios.get(`/users`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      deleteById(id, params = {}) {
-        return $axios
-          .delete(`/users/${id}`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async deleteById(id, params = {}) {
+        try {
+          const res = await $axios.delete(`/users/${id}`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      getById(id, params = {}) {
-        return $axios
-          .get(`/users/${id}`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async getById(id, params = {}) {
+        try {
+          const res = await $axios.get(`/users/${id}`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      updateById(id, params = {}) {
-        return $axios
-          .post(`/users/${id}`, params)
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
+      async updateById(id, params = {}) {
+        try {
+          const res = await $axios.post(`/users/${id}`, params)
+          return res
+        } catch (e) {
+          return e
+        }
       },
-      create(params = {}) {
-        return $axios
-          .put(`/users`, params)
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
+      async create(params = {}) {
+        try {
+          const res = await $axios.put(`/users`, params)
+          return res
+        } catch (e) {
+          return e
+        }
       }
     },
     groups: {
-      get(params = {}) {
-        return $axios
-          .get(`/groups`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async get(params = {}) {
+        try {
+          const res = await $axios.get(`/groups`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      deleteById(id, params = {}) {
-        return $axios
-          .delete(`/groups/${id}`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async deleteById(id, params = {}) {
+        try {
+          const res = await $axios.delete(`/groups/${id}`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      getById(id, params = {}) {
-        return $axios
-          .get(`/groups/${id}`, { params })
-          .then(res => {
-            return res.data.data
-          })
-          .catch(err => {
-            return err
-          })
+      async getById(id, params = {}) {
+        try {
+          const res = await $axios.get(`/groups/${id}`, { params })
+          return res.data.data
+        } catch (e) {
+          return e
+        }
       },
-      updateById(id, params = {}) {
-        return $axios
-          .post(`/groups/${id}`, params)
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
+      async updateById(id, params = {}) {
+        try {
+          const res = await $axios.post(`/groups/${id}`, params)
+          return res
+        } catch (e) {
+          return e
+        }
       },
-      create(params = {}) {
-        return $axios
-          .put(`/groups`, params)
-          .then(res => {
-            return res
-          })
-          .catch(err => {
-            return err
-          })
+      async create(params = {}) {
+        try {
+          const res = await $axios.put(`/groups`, params)
+          return res
+        } catch (e) {
+          return e
+        }
       }
     },
     upload: {
-      upload(params = {}) {
-        return $axios
-          .post(`/upload`, params)
-          .then(res => {
-            return res.data
-          })
-          .catch(err => {
-            return err
-          })
+      async upload(params = {}) {
+        try {
+          const res = await $axios.post(`/upload`, params)
+          return res.data
+        } catch (e) {
+          return e
+        }
       },
-      getImageByUrl(url) {
-        return $axios
-          .get(`/files/${url}`, {
+      async getImageByUrl(url = {}) {
+        try {
+          const res = await $axios.get(`/files/${url}`, {
             headers: {
               Accept: 'image/*'
             },
             responseType: 'blob'
           })
-          .then(res => {
-            return res.data
-          })
-          .catch(err => {
-            return err
-          })
+          return res.data
+        } catch (e) {
+          return e
+        }
       }
     }
   }

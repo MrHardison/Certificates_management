@@ -28,6 +28,9 @@
         </div>
       </div>
     </template>
+    <template v-else>
+      <h5 class="m-0">{{ headerTitle }}</h5>
+    </template>
   </div>
 </template>
 
@@ -44,6 +47,10 @@ export default {
     enableHeader: {
       type: Boolean,
       default: false
+    },
+    headerTitle: {
+      type: String,
+      default: ''
     }
   },
   data() {

@@ -18,14 +18,12 @@ export const getters = {
 }
 
 export const actions = {
-  setDataListGroups() {
-    this.$api.dataGroups.dataListGroups().then(res => {
-      this.commit('dataListItems/setDataListGroups', res)
-    })
+  async setDataListGroups() {
+    const res = await this.$api.dataGroups.dataListGroups()
+    this.commit('dataListItems/setDataListGroups', res)
   },
-  setDataListDefaults() {
-    this.$api.dataListDefaults.getDataListDefaults().then(res => {
-      this.commit('dataListItems/setDataListDefaults', res)
-    })
+  async setDataListDefaults() {
+    const res = await this.$api.dataListDefaults.getDataListDefaults()
+    this.commit('dataListItems/setDataListDefaults', res)
   }
 }

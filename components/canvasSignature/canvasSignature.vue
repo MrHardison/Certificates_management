@@ -18,7 +18,8 @@
       </div>
       <canvas
         ref="canvas"
-        :id="id"/>
+        :id="id"
+      />
     </div>
     <div
       v-if="required && !signature.length"
@@ -85,23 +86,20 @@ export default {
     }
   },
   mounted() {
-    if (!this.signature.length) {
+    if (!this.signature) {
       this.errorRequired(true)
     }
     this.canvas = this.$refs.canvas
     this.context = this.canvas.getContext('2d')
 
-    let w = Math.max(
-      document.documentElement.clientWidth,
-      window.innerWidth || 0
-    )
-    if (w <= 544) {
+    if (document.documentElement.clientWidth <= 544) {
       this.canvas.width = this.$refs.container.clientWidth
       this.canvas.height = this.data.limits.image.height
     } else {
       this.canvas.width = this.data.limits.image.width
       this.canvas.height = this.data.limits.image.height
     }
+    this.resizeCanvas()
 
     let signaturePad = new SignaturePad(this.canvas, {
       onEnd: _.debounce(() => {
@@ -116,24 +114,35 @@ export default {
     if (this.signature) {
       this.isLoading = true
       this.getImageByUrl(this.signature, true)
-    } else {
-      // signaturePad.fromDataURL('data:image/png;base64,' + this.signature)
     }
     this.signaturePad = signaturePad
+    this.$nextTick(function() {
+      window.addEventListener('resize', () => {
+        this.resizeCanvas()
+      })
+    })
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.resizeCanvas())
   },
   methods: {
+    resizeCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1)
+      this.canvas.width = this.canvas.offsetWidth * ratio
+      this.canvas.height = this.canvas.offsetHeight * ratio
+      this.context.scale(ratio, ratio)
+    },
     clearSignature() {
       this.signaturePad.clear()
       this.imageError = false
       this.errorRequired(false)
       this.$emit('update', '')
     },
-    uploadImage(img) {
-      this.$api.upload.upload(img).then(res => {
-        if (res.data) {
-          this.getImageByUrl(res.data)
-        }
-      })
+    async uploadImage(img) {
+      const res = await this.$api.upload.upload(img)
+      if (res.data) {
+        this.getImageByUrl(res.data)
+      }
     },
     getImageByUrl(url, status) {
       this.$api.upload
@@ -170,11 +179,6 @@ export default {
       }
       return new Blob([ia], { type: mimeString })
     },
-    getWindowWidth() {
-      window.addEventListener('resize', () => {
-        this.windowWidth = document.documentElement.clientWidth
-      })
-    },
     errorRequired(isError) {
       if (this.required) {
         const error = {
@@ -208,6 +212,8 @@ export default {
     }
     canvas {
       border: 1px solid $secondary;
+      width: 100%;
+      height: 100%;
     }
     &.required {
       canvas {

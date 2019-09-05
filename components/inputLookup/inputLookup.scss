@@ -1,0 +1,53 @@
+.lookup {
+  cursor: pointer;
+  display: flex;
+  position: relative;
+  justify-content: center;
+
+  &::before {
+    content: '';
+    height: 100%;
+    position: absolute;
+    width: 100%;
+    z-index: 2;
+  }
+
+  &::after {
+    background: #055EA8;
+    bottom: 0;
+    content: '';
+    height: 2px;
+    left: 0;
+    position: absolute;
+    width: 100%;
+  }
+
+  &.filled {
+    &::after {
+      background: #3ABA00;
+    }
+  }
+
+  .input-icon {
+    color: #055EA8;
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    z-index: 1;
+  }
+
+  input {
+    background: #f7f7f7;
+    border: 0;
+    border-radius: 2px;
+    cursor: pointer;
+    height: 38px;
+    display: flex;
+    padding: 0 2rem;
+    position: relative;
+    width: 100%;
+  }
+
+}

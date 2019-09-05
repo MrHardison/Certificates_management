@@ -1,7 +1,7 @@
 <template>
   <v-paginator
     :paginator="paginator"
-    class="card-footer"
+    :class="{'card-footer': cardFooter()}"
     @changePage="$emit('update', $event)"/>
 </template>
 
@@ -16,6 +16,11 @@ export default {
       default() {
         return {}
       }
+    }
+  },
+  methods: {
+    cardFooter() {
+      return _.isEmpty(this.paginator) ? false : true
     }
   }
 }

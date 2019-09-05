@@ -8,7 +8,7 @@
             :key="index"
             :item="section"
             :active-section-id="activeSectionId"
-            :class="{active: section.id === activeSectionId, filled: checkSectionStatus(section) === 'filled', error: validationErrorSection(section) === 'error'}"
+            :class="{active: section.id === activeSectionId, filled: checkSectionStatus(section), error: validationErrorSection(section) === 'error'}"
             @make-folder="makeFolder"
             @openSection="openSection($event)"
             @click.native="section.children.length === 0 && openSection(section.id)"/>
@@ -35,6 +35,12 @@ export default {
       default() {
         return {}
       }
+    },
+    sectionsStatus: {
+      type: Array,
+      default() {
+        return []
+      }
     }
   },
   data() {
@@ -45,7 +51,6 @@ export default {
   },
   computed: {
     ...mapGetters({
-      getSectionsStatus: 'dataView/getSectionsStatus',
       storageValidationErrors: 'validation/getErrors'
     }),
     transformToTree() {
@@ -75,10 +80,8 @@ export default {
   },
   methods: {
     checkSectionStatus(section) {
-      const item = _.find(this.getSectionsStatus, {
-        form_section_id: section.id
-      })
-      return item && item.status
+      const item = this.sectionsStatus.find(id => section.id === id)
+      return item && true
     },
     makeFolder(item) {
       Vue.set(item, 'children', [])

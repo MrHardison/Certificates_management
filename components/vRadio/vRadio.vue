@@ -1,6 +1,6 @@
 <template>
   <div class="radio-wrapper">
-    <template v-for="(item, index) in options">
+    <template v-for="(item, index) in $order(options)">
       <div
         :key="index"
         class="form-check">
@@ -82,7 +82,7 @@ export default {
         this.model = item.value
       }
     })
-    if (this.selected.length > 0) {
+    if (this.selected && this.selected.length) {
       this.model = this.selected
     }
     if (!this.model.length) {

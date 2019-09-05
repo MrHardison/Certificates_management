@@ -10,6 +10,7 @@
               class="list-striped--item outher">
               <tree-item
                 :title="category.name"
+                :subtitle="'Permissions for all forms within this category'"
                 :default-checked="{
                   read: getFormCategoryChecks(category.id).read,
                   update: getFormCategoryChecks(category.id).update,
@@ -19,6 +20,7 @@
                 @updateItem="setFormCategoryChecks(category.id, $event)">
                 <ul
                   class="list-striped">
+                  <p class="description">Permissions for individual forms</p>
                   <template v-for="form in category.forms">
                     <li
                       :key="form.id"
@@ -45,7 +47,7 @@
 </template>
 
 <script>
-import Checkbox from '~/components/checkbox/checkbox'
+import Checkbox from '~/components/vCheckbox'
 import TreeItem from '~/blocks/vRole/treeItem'
 export default {
   name: 'FormTree',
@@ -118,10 +120,6 @@ export default {
       return find
     },
     setFormCategoryChecks(id, item) {
-      // const find = this.checkedFormCategories[id]
-      // if (!find) {
-      //   this.checkedFormCategories[id] = item
-      // }
       this.checkedFormCategories[id] = item
       this.$emit('updateFormCategories', this.checkedFormCategories)
     },
@@ -149,9 +147,6 @@ export default {
       return find
     },
     setFormChecks(id, item) {
-      // const find = this.checkedForms[id]
-      // if (!find) {
-      // }
       this.checkedForms[id] = item
       this.$emit('updateForms', this.checkedForms)
     }
@@ -169,8 +164,14 @@ export default {
 }
 .list-striped {
   &--item {
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 1.5rem;
     position: relative;
   }
+}
+.description {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  text-decoration: underline;
+  padding-left: 1.5rem;
 }
 </style>

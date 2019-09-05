@@ -117,9 +117,9 @@ export default {
         selected: true
       })
       if (this.defaultSelected >= 0 && this.options.length) {
-        this.selected = this.options[this.defaultSelected]
+        this.selectOption(this.options[this.defaultSelected])
       } else if (selectedOption) {
-        this.selected = selectedOption.label
+        this.selectOption(selectedOption)
       }
     }
   },
@@ -130,11 +130,13 @@ export default {
     getOptionView(option) {
       if (typeof option === 'string' || typeof option === 'number') {
         return option
+      } else if (typeof option === 'object' && option.hasOwnProperty('label')) {
+        return option.label
       } else if (typeof option === 'object' && option.hasOwnProperty('value')) {
         return option.value
       } else if (
         typeof option === 'object' &&
-        !option.hasOwnProperty('value')
+        !option.hasOwnProperty('label')
       ) {
         return `Empty title - ${this.options.indexOf(option)}`
       }
@@ -158,7 +160,7 @@ export default {
         value: this.selectedItem
       })
       if (selectedOption) {
-        this.selected = selectedOption.value
+        this.selected = selectedOption.label
       }
     },
     errorRequired(isError) {
