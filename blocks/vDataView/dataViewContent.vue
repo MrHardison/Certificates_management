@@ -176,10 +176,10 @@
               :name="element.name" />
             <checkbox
               :selected="element.rules.selected"
-              :data="getCertificateElement(element.id).data === 'true' ? true : false"
+              :data="getCertificateElement(element.id).data"
               :required="element.rules.required"
               @validationError="$emit('validationError', $event)"
-              @change="getCertificateElement(element.id).data = $event.toString()"
+              @change="getCertificateElement(element.id).data = $event ? $event.toString() : ''"
             />
           </template>
           <!-- Large lookup -->

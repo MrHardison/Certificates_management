@@ -220,19 +220,36 @@ export default {
           const checkedElement = certificateSection.elements.find(
             e => e.form_section_element_id === element.id
           )
-          const certificateElement = checkedElement
-            ? checkedElement
-            : {
-                // eslint-disable-next-line prettier/prettier
-                data: element.rules.default_text ? element.rules.default_text : '',
-                certificate_section_id: certificateSection.id
-                  ? certificateSection.id
-                  : null,
-                form_section_element_id: element.id,
-                record_group_id: null,
-                record_lookups_system: [],
-                record_lookups_custom: []
-              }
+          let certificateElement = checkedElement || {}
+          if (element.rules.field_type === 17) {
+            certificateElement = checkedElement
+              ? checkedElement
+              : {
+                  // eslint-disable-next-line prettier/prettier
+                  data: element.rules.selected ? element.rules.selected : '',
+                  certificate_section_id: certificateSection.id
+                    ? certificateSection.id
+                    : null,
+                  form_section_element_id: element.id,
+                  record_group_id: null,
+                  record_lookups_system: [],
+                  record_lookups_custom: []
+                }
+          } else {
+            certificateElement = checkedElement
+              ? checkedElement
+              : {
+                  // eslint-disable-next-line prettier/prettier
+                  data: element.rules.default_text ? element.rules.default_text : '',
+                  certificate_section_id: certificateSection.id
+                    ? certificateSection.id
+                    : null,
+                  form_section_element_id: element.id,
+                  record_group_id: null,
+                  record_lookups_system: [],
+                  record_lookups_custom: []
+                }
+          }
           if (
             // eslint-disable-next-line
             !certificateSection.elements.find(e => e === certificateElement)

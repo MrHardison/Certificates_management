@@ -25,7 +25,7 @@ export default {
       default: 'No label'
     },
     data: {
-      type: Boolean,
+      type: [String, Boolean],
       default: false
     },
     selected: {
@@ -57,14 +57,19 @@ export default {
     },
     data: {
       handler(data) {
-        this.model = data
+        if (typeof this.data === 'string') {
+          this.model = this.data === 'true' ? true : false
+        } else {
+          this.model = this.data
+        }
       }
     }
   },
   mounted() {
-    this.model = this.data
-    if (this.selected) {
-      this.model = this.selected
+    if (typeof this.data === 'string') {
+      this.model = this.data === 'true' ? true : false
+    } else {
+      this.model = this.data
     }
     if (!this.model) {
       this.errorRequired(true)
